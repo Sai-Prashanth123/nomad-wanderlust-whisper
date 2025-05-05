@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  auth, 
-  googleProvider,
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  onAuthStateChanged, 
-  signOut,
-  signInWithPopup
-} from '@/lib/firebase';
-import { User } from 'firebase/auth';
+
+// Create a mock user type
+interface User {
+  email: string;
+  displayName: string | null;
+  uid: string;
+}
 
 interface AuthContextType {
   currentUser: User | null;
@@ -30,36 +27,34 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const signup = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  // Create a dummy user
+  const dummyUser: User = {
+    email: 'guest@example.com',
+    displayName: 'Guest User',
+    uid: 'guest-user-id'
   };
 
-  const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+  const [loading, setLoading] = useState(false);
+
+  // Mock auth functions that do nothing
+  const signup = async () => {
+    console.log('Auth is disabled - using guest access');
+  };
+
+  const login = async () => {
+    console.log('Auth is disabled - using guest access');
   };
 
   const loginWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    console.log('Auth is disabled - using guest access');
   };
 
   const logout = async () => {
-    await signOut(auth);
+    console.log('Auth is disabled - using guest access');
   };
 
   const value = {
-    currentUser,
+    currentUser: dummyUser,
     loading,
     login,
     signup,

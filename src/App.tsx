@@ -4,11 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import ChatHome from './components/ChatHome';
 import TravelPlanExample from './components/TravelPlanExample';
@@ -25,71 +22,56 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Protected routes */}
+              {/* All routes are now public */}
               <Route 
                 path="/" 
                 element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <ChatHome />
-                    </Layout>
-                  </ProtectedRoute>
+                  <Layout>
+                    <ChatHome />
+                  </Layout>
                 } 
               />
               
-              {/* Add other protected routes with Layout */}
               <Route 
                 path="/explore" 
                 element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <div className="max-w-4xl mx-auto">
-                        <h1 className="text-3xl font-bold mb-6 gradient-text">Explore Destinations</h1>
-                        <p className="mb-8">Discover amazing nomadic destinations around the world.</p>
-                      </div>
-                    </Layout>
-                  </ProtectedRoute>
+                  <Layout>
+                    <div className="max-w-4xl mx-auto">
+                      <h1 className="text-3xl font-bold mb-6 gradient-text">Explore Destinations</h1>
+                      <p className="mb-8">Discover amazing nomadic destinations around the world.</p>
+                    </div>
+                  </Layout>
                 } 
               />
               
               <Route 
                 path="/chat" 
                 element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <ChatHome />
-                    </Layout>
-                  </ProtectedRoute>
+                  <Layout>
+                    <ChatHome />
+                  </Layout>
                 } 
               />
               
               <Route 
                 path="/library" 
                 element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <div className="max-w-4xl mx-auto">
-                        <h1 className="text-3xl font-bold mb-6 gradient-text">Your Travel Library</h1>
-                        <p className="mb-8">Access saved destinations and personalized guides.</p>
-                      </div>
-                    </Layout>
-                  </ProtectedRoute>
+                  <Layout>
+                    <div className="max-w-4xl mx-auto">
+                      <h1 className="text-3xl font-bold mb-6 gradient-text">Your Travel Library</h1>
+                      <p className="mb-8">Access saved destinations and personalized guides.</p>
+                    </div>
+                  </Layout>
                 } 
               />
               
-              {/* Travel Plan Example route (protected) */}
+              {/* Travel Plan Example route (now public) */}
               <Route 
                 path="/travel-plan-demo" 
                 element={
-                  <ProtectedRoute>
-                    <TravelPlanExample />
-                  </ProtectedRoute>
+                  <TravelPlanExample />
                 } 
               />
-              
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
               
               {/* Public travel plan demo for showcasing the feature */}
               <Route path="/demo" element={<TravelPlanExample />} />

@@ -35,6 +35,41 @@ export const useChats = () => {
         return;
       }
 
+      // Check if we're using a dummy user (when auth is removed)
+      const isDummyUser = currentUser.uid === 'guest-user-id';
+      
+      if (isDummyUser) {
+        // Create a sample chat for the dummy user
+        console.log('Using guest user - creating sample chat');
+        setLoading(false);
+        
+        // If no chats exist yet, create a welcome chat
+        if (chatSessions.length === 0) {
+          const newChatId = uuidv4();
+          const welcomeChat: ChatSession = {
+            id: newChatId,
+            title: 'Welcome to Wanderlust Whisper',
+            timestamp: new Date(),
+            messages: [
+              {
+                id: uuidv4(),
+                content: "Welcome to Wanderlust Whisper! I'm your AI travel companion. How can I assist with your travel plans today?",
+                role: 'assistant',
+                timestamp: new Date(),
+                isTravel: false
+              }
+            ],
+            destinations: []
+          };
+          
+          setChatSessions([welcomeChat]);
+          setActiveChatId(newChatId);
+          setIsNewChatActive(false);
+        }
+        
+        return;
+      }
+
       try {
         setLoading(true);
         console.log(`Loading chats for user ${currentUser.uid}`);
@@ -153,6 +188,15 @@ export const useChats = () => {
     setActiveChatId(newChatId);
     setIsNewChatActive(true);
 
+    // Check if we're using a dummy user (when auth is removed)
+    const isDummyUser = currentUser.uid === 'guest-user-id';
+    
+    if (isDummyUser) {
+      // Skip Firestore operations for dummy user
+      console.log('Using guest user - skipping Firestore operations for new chat');
+      return newChatId;
+    }
+
     // Add to Firestore
     try {
       console.log(`Creating new chat ${newChatId} for user ${currentUser.uid}`);
@@ -193,7 +237,16 @@ export const useChats = () => {
 
   // Update chat messages
   const updateChatMessages = async (chatId: string, messages: Message[]) => {
-    if (!currentUser) return;
+    if (!currentUser || !chatId) {
+      console.log('Cannot update messages: No user or chat ID');
+      return;
+    }
+
+    // Validate chatId is a valid string
+    if (typeof chatId !== 'string' || chatId.trim() === '') {
+      console.error('Invalid chatId provided to updateChatMessages');
+      return;
+    }
 
     // Update local state first for UI responsiveness
     setChatSessions(prevSessions => {
@@ -225,6 +278,15 @@ export const useChats = () => {
         return session;
       });
     });
+
+    // Check if we're using a dummy user (when auth is removed)
+    const isDummyUser = currentUser.uid === 'guest-user-id';
+    
+    if (isDummyUser) {
+      // Skip Firestore operations for dummy user
+      console.log('Using guest user - skipping Firestore operations');
+      return;
+    }
 
     // Update in Firestore
     try {
@@ -342,6 +404,15 @@ export const useChats = () => {
       });
     });
 
+    // Check if we're using a dummy user (when auth is removed)
+    const isDummyUser = currentUser.uid === 'guest-user-id';
+    
+    if (isDummyUser) {
+      // Skip Firestore operations for dummy user
+      console.log('Using guest user - skipping Firestore operations for destinations update');
+      return;
+    }
+
     // Update in Firestore
     try {
       console.log(`Updating destinations for chat ${chatId}`);
@@ -378,6 +449,15 @@ export const useChats = () => {
       )
     );
 
+    // Check if we're using a dummy user (when auth is removed)
+    const isDummyUser = currentUser.uid === 'guest-user-id';
+    
+    if (isDummyUser) {
+      // Skip Firestore operations for dummy user
+      console.log('Using guest user - skipping Firestore operations for rename');
+      return;
+    }
+
     // Update in Firestore
     try {
       const chatRef = doc(db, 'users', currentUser.uid, 'chats', chatId);
@@ -400,6 +480,15 @@ export const useChats = () => {
       const remainingSessions = chatSessions.filter(session => session.id !== chatId);
       setActiveChatId(remainingSessions.length > 0 ? remainingSessions[0].id : null);
       setIsNewChatActive(remainingSessions.length === 0);
+    }
+
+    // Check if we're using a dummy user (when auth is removed)
+    const isDummyUser = currentUser.uid === 'guest-user-id';
+    
+    if (isDummyUser) {
+      // Skip Firestore operations for dummy user
+      console.log('Using guest user - skipping Firestore operations for delete');
+      return;
     }
 
     // Delete from Firestore

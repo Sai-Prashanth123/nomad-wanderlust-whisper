@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -9,7 +8,6 @@ import {
   Plus,
   Library, 
   Settings, 
-  LogOut,
   ExternalLink,
   User,
   ChevronDown,
@@ -96,7 +94,6 @@ const Layout = ({ children }: LayoutProps) => {
     updateChatDestinations
   } = useChats();
   
-  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   // Filter chats based on search term
@@ -106,24 +103,9 @@ const Layout = ({ children }: LayoutProps) => {
         chat.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
-  // Get user's name from email (take everything before @)
-  const userName = currentUser?.email 
-    ? currentUser.email.split('@')[0].split('.').map(part => 
-        part.charAt(0).toUpperCase() + part.slice(1)
-      ).join(' ') 
-    : 'User';
-
-  // Get first character for avatar
-  const userInitial = userName.charAt(0).toUpperCase();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
-  };
+  // Default user name since we're not using auth
+  const userName = 'Guest User';
+  const userInitial = 'G';
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -312,52 +294,12 @@ const Layout = ({ children }: LayoutProps) => {
                 </Button>
 
                 {/* User dropdown */}
-                {currentUser ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="p-1">
-                        <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-medium user-avatar">
-                          {userInitial}
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-gray-200">
-                      <DropdownMenuItem className="flex items-center text-sm py-2 cursor-pointer hover:bg-gray-700">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>{userName}</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center text-sm py-2 cursor-pointer hover:bg-gray-700" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Logout</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gray-700 flex items-center justify-center user-avatar">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={() => navigate('/login')}
-                        className="text-xs md:text-sm bg-nomad-blue hover:bg-nomad-blue/90 text-white py-1 px-2 md:px-3 h-auto"
-                      >
-                        Login
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate('/signup')}
-                        className="text-xs md:text-sm border-gray-700 text-white hover:bg-gray-800 py-1 px-2 md:px-3 h-auto hidden md:inline-flex"
-                      >
-                        Sign Up
-                      </Button>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gray-700 flex items-center justify-center user-avatar">
+                    <User className="h-5 w-5 text-gray-400" />
                   </div>
-                )}
+                  <span className="text-gray-300 text-sm hidden md:block">{userName}</span>
+                </div>
               </div>
             </div>
           </div>

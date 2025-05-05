@@ -1,51 +1,146 @@
+import { Destination } from "../components/DestinationCard";
 
-export const mockDestinations = [
+export const mockDestinations: Destination[] = [
   {
-    name: "Da Nang",
-    country: "Vietnam",
-    costOfLiving: "$700 - $1,400/mo",
-    wifiRating: 4,
-    visaTip: "3-month eVisa available online",
-    safety: 8,
-    economicStability: 7,
-    insiderTip: "Try working from The Hills cafe for amazing mountain views and strong WiFi",
-    imageUrl: "https://images.unsplash.com/photo-1564596823821-78ffc67e26e8?q=80&w=800&auto=format&fit=crop",
-    detailedDescription: "Da Nang offers the perfect blend of beach life and city amenities at an incredibly affordable price. The Dragon Bridge lights up on weekends with a fire show, and you'll find plenty of cafes with fiber internet. Many nomads stay in My An Beach area for easy access to both the beach and city center."
+    id: "1",
+    name: "Chiang Mai",
+    country: "Thailand",
+    imageUrl: "https://images.unsplash.com/photo-1598935888738-cd2a3a5e152f?q=80&w=2670&auto=format&fit=crop",
+    description: "Known as the digital nomad capital of Southeast Asia, Chiang Mai offers an exceptional balance of affordability, quality of life, and vibrant culture. Its laid-back atmosphere, abundance of coworking spaces, and strong nomad community make it ideal for remote workers.",
+    costOfLiving: "low",
+    internetSpeed: "fast",
+    visaRequirements: "moderate",
+    climate: "tropical",
+    bestTimeToVisit: ["Nov", "Dec", "Jan", "Feb", "Mar"],
+    nomadCommunity: "large",
+    safetyRating: 4,
+    monthlyRent: "$300-600",
+    coworkingSpaces: 15
   },
   {
-    name: "Lagos",
+    id: "2",
+    name: "Lisbon",
     country: "Portugal",
-    costOfLiving: "$1,800 - $2,600/mo",
-    wifiRating: 4,
-    visaTip: "90 days visa-free for most passports, D7 visa for longer stays",
-    safety: 9,
-    economicStability: 8,
-    insiderTip: "Venture to Sagres for breathtaking cliffs and smaller crowds than the main beaches",
-    imageUrl: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?q=80&w=800&auto=format&fit=crop",
-    detailedDescription: "Lagos combines historic Portuguese charm with a relaxed beach vibe. The old town is walkable with cobblestone streets and traditional buildings. The city has become increasingly popular with nomads, leading to several coworking spaces opening. Don't miss the stunning Ponta da Piedade coastline with its golden cliffs and turquoise waters."
+    imageUrl: "https://images.unsplash.com/photo-1579541814924-49fef17c5be5?q=80&w=2574&auto=format&fit=crop",
+    description: "With its beautiful coastal setting, historic charm, and vibrant culture, Lisbon has quickly become a European hub for digital nomads. It offers great weather, delicious food, and reasonable living costs compared to other Western European capitals.",
+    costOfLiving: "medium",
+    internetSpeed: "fast",
+    visaRequirements: "easy",
+    climate: "temperate",
+    bestTimeToVisit: ["Apr", "May", "Jun", "Sep", "Oct"],
+    nomadCommunity: "large",
+    safetyRating: 5,
+    monthlyRent: "$700-1200",
+    coworkingSpaces: 20
   },
   {
-    name: "Canggu",
+    id: "3",
+    name: "Bali",
     country: "Indonesia",
-    costOfLiving: "$1,100 - $2,000/mo",
-    wifiRating: 3,
-    visaTip: "New digital nomad visa available for 5 years",
-    safety: 7,
-    economicStability: 6,
-    insiderTip: "Stay in Pererenan for a quieter experience than the busy Batu Bolong area",
-    imageUrl: "https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?q=80&w=800&auto=format&fit=crop",
-    detailedDescription: "Canggu has evolved from a sleepy surf town to a digital nomad hotspot. With dozens of coworking spaces and cafes serving western and Indonesian food, it's easy to see why nomads flock here. The beach sunsets are legendary, and the community is very welcoming to newcomers. Be prepared for scooter traffic during peak hours."
+    imageUrl: "https://images.unsplash.com/photo-1573790387438-4da905039392?q=80&w=2025&auto=format&fit=crop",
+    description: "This tropical paradise has evolved into a major digital nomad destination, especially around Canggu and Ubud. Bali offers a relaxed lifestyle, stunning beaches, rich culture, and a large community of like-minded remote workers.",
+    costOfLiving: "low",
+    internetSpeed: "medium",
+    visaRequirements: "moderate",
+    climate: "tropical",
+    bestTimeToVisit: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"],
+    nomadCommunity: "large",
+    safetyRating: 4,
+    monthlyRent: "$400-800",
+    coworkingSpaces: 25
   },
   {
+    id: "4",
     name: "Medellín",
     country: "Colombia",
-    costOfLiving: "$1,000 - $1,800/mo",
-    wifiRating: 4,
-    visaTip: "90 days on arrival, extendable to 180 days",
-    safety: 6,
-    economicStability: 6,
-    insiderTip: "El Poblado is popular but try Laureles for a more authentic experience",
-    imageUrl: "https://images.unsplash.com/photo-1599407384144-251eddc256b2?q=80&w=800&auto=format&fit=crop",
-    detailedDescription: "Known as the City of Eternal Spring for its perfect year-round weather, Medellín has transformed from its troubled past into a tech and innovation hub. The metro system is clean and efficient, and the city is surrounded by green mountains. Locals are friendly, and the nightlife is vibrant. Laureles and El Poblado are the most popular areas for nomads."
+    imageUrl: "https://images.unsplash.com/photo-1630513725002-9f6fc1af1117?q=80&w=2574&auto=format&fit=crop",
+    description: "Once notorious, Medellín has transformed into a modern, innovative city popular with digital nomads. Known as the 'City of Eternal Spring' for its ideal climate, it offers affordable living, good infrastructure, and a growing tech scene.",
+    costOfLiving: "low",
+    internetSpeed: "medium",
+    visaRequirements: "easy",
+    climate: "temperate",
+    bestTimeToVisit: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    nomadCommunity: "growing",
+    safetyRating: 3,
+    monthlyRent: "$400-700",
+    coworkingSpaces: 12
   },
+  {
+    id: "5",
+    name: "Budapest",
+    country: "Hungary",
+    imageUrl: "https://images.unsplash.com/photo-1551867633-194f125bddfa?q=80&w=2574&auto=format&fit=crop",
+    description: "Budapest offers incredible value for digital nomads seeking European charm without Western European prices. Split by the Danube River, the city boasts stunning architecture, thermal baths, vibrant nightlife, and a convenient location for exploring Europe.",
+    costOfLiving: "medium",
+    internetSpeed: "fast",
+    visaRequirements: "moderate",
+    climate: "continental",
+    bestTimeToVisit: ["Apr", "May", "Jun", "Sep", "Oct"],
+    nomadCommunity: "growing",
+    safetyRating: 4,
+    monthlyRent: "$500-800",
+    coworkingSpaces: 15
+  },
+  {
+    id: "6",
+    name: "Mexico City",
+    country: "Mexico",
+    imageUrl: "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?q=80&w=2670&auto=format&fit=crop",
+    description: "Mexico City offers a perfect blend of ancient culture and modern amenities for digital nomads. With its vibrant arts scene, incredible food, and large expat community, the city provides an exciting base with easy access to both coasts and natural wonders.",
+    costOfLiving: "low",
+    internetSpeed: "medium",
+    visaRequirements: "easy",
+    climate: "temperate",
+    bestTimeToVisit: ["Jan", "Feb", "Mar", "Nov", "Dec"],
+    nomadCommunity: "large",
+    safetyRating: 3,
+    monthlyRent: "$500-900",
+    coworkingSpaces: 30
+  }
 ];
+
+// Function to get suggested destinations based on a user query
+export const getSuggestedDestinations = (query: string): Destination[] => {
+  const lowercaseQuery = query.toLowerCase();
+  
+  // Keywords to match with destinations
+  if (lowercaseQuery.includes('beach') || lowercaseQuery.includes('tropical')) {
+    return mockDestinations.filter(dest => dest.climate === 'tropical');
+  }
+  
+  if (lowercaseQuery.includes('cheap') || lowercaseQuery.includes('affordable')) {
+    return mockDestinations.filter(dest => dest.costOfLiving === 'low');
+  }
+  
+  if (lowercaseQuery.includes('europe')) {
+    return mockDestinations.filter(dest => 
+      dest.country === 'Portugal' || dest.country === 'Hungary');
+  }
+  
+  if (lowercaseQuery.includes('asia')) {
+    return mockDestinations.filter(dest => 
+      dest.country === 'Thailand' || dest.country === 'Indonesia');
+  }
+  
+  if (lowercaseQuery.includes('fast wifi') || lowercaseQuery.includes('good internet')) {
+    return mockDestinations.filter(dest => dest.internetSpeed === 'fast');
+  }
+  
+  if (lowercaseQuery.includes('visa') || lowercaseQuery.includes('easy visa')) {
+    return mockDestinations.filter(dest => dest.visaRequirements === 'easy');
+  }
+  
+  // Default: return top 3 most popular
+  return mockDestinations.slice(0, 3);
+};
+
+// Function to get destinations by specific query
+export const getDestinationsByQuery = (query: string): Destination[] => {
+  const lowercaseQuery = query.toLowerCase();
+  
+  return mockDestinations.filter(
+    dest => 
+      dest.name.toLowerCase().includes(lowercaseQuery) || 
+      dest.country.toLowerCase().includes(lowercaseQuery)
+  );
+};

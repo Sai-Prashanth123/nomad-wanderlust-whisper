@@ -1,200 +1,411 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { 
+  Wifi, 
+  DollarSign, 
+  Clipboard, 
+  Shield,
+  AlertTriangle,
+  Sun, 
+  CloudRain, 
+  Coffee, 
+  Map, 
+  Heart,
+  ExternalLink,
+  Info,
+  Lightbulb,
+  LightbulbOff,
+  Save
+} from 'lucide-react';
+import { CardDetailsModal } from './CardDetailsModal';
 
-import React, { useState, useRef, useEffect } from 'react';
-
-export interface DestinationCardProps {
+export interface Destination {
+  id: string;
   name: string;
   country: string;
-  costOfLiving: string;
-  wifiRating: number;
-  visaTip: string;
-  safety: number;
-  economicStability: number;
-  insiderTip: string;
   imageUrl: string;
-  detailedDescription: string;
-  index: number;
+  description: string;
+  costOfLiving: 'low' | 'medium' | 'high';
+  internetSpeed: 'slow' | 'medium' | 'fast';
+  visaRequirements: 'easy' | 'moderate' | 'difficult';
+  climate: 'tropical' | 'temperate' | 'arid' | 'continental';
+  bestTimeToVisit: string[];
+  nomadCommunity: 'small' | 'growing' | 'large';
+  safetyRating: number;
+  monthlyRent: string;
+  coworkingSpaces: number;
+  
+  // Additional detailed information
+  wifiRating?: number;
+  visaInfo?: string;
+  safetySummary?: string;
+  travelTip?: string;
+  
+  // New fields for enhanced data display
+  localFunFact?: string;
+  coworkingCafes?: string[];
+  simTip?: string;
+  visaTip?: string;
+  insiderTip?: string;
+  weatherWatch?: string;
+  wifiDetails?: string;
+  canSave?: boolean;
 }
 
-const DestinationCard: React.FC<DestinationCardProps> = ({
-  name,
-  country,
-  costOfLiving,
-  wifiRating,
-  visaTip,
-  safety,
-  economicStability,
-  insiderTip,
-  imageUrl,
-  detailedDescription,
-  index
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  
-  // Staggered animation delay based on card index
-  const animationDelay = 200 + (index * 150);
+interface DestinationCardProps {
+  destination: Destination;
+  isCompact?: boolean;
+}
 
-  useEffect(() => {
-    if (isExpanded && cardRef.current) {
-      // Set custom properties for expansion animation
-      cardRef.current.style.setProperty('--collapsed-height', `${cardRef.current.scrollHeight}px`);
-      cardRef.current.style.setProperty('--expanded-height', `${cardRef.current.scrollHeight + 200}px`);
+const DestinationCard: React.FC<DestinationCardProps> = ({ destination, isCompact = false }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Generate city-specific detailed info if not provided
+  const getCostRange = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "$700–$1000/month";
+      case "Goa": return "$500–$800/month";
+      case "Hyderabad": return "$600–$900/month";
+      case "Bangkok": return "$800–$1200/month";
+      case "Chiang Mai": return "$600–$900/month";
+      case "Bali": return "$700–$1100/month";
+      case "Da Nang": return "$500–$800/month";
+      default: return destination.monthlyRent || "$600-1000/month";
     }
-  }, [isExpanded]);
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
   };
 
-  // Helper function to render WiFi rating
-  const renderWifiRating = (rating: number) => {
+  const getWifiInfo = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "100 Mbps (avg) – 4.5/5 rating";
+      case "Goa": return "50 Mbps (avg) – 3.5/5 rating";
+      case "Hyderabad": return "80 Mbps (avg) – 4/5 rating";
+      case "Bangkok": return "150 Mbps (avg) – 4.5/5 rating";
+      case "Chiang Mai": return "90 Mbps (avg) – 4/5 rating";
+      case "Bali": return "40 Mbps (avg) – 3/5 rating";
+      case "Da Nang": return "80–120 Mbps in cafés, consistent for video calls";
+      default: return destination.internetSpeed === "fast" ? "80+ Mbps" : 
+               destination.internetSpeed === "medium" ? "30-80 Mbps" : "10-30 Mbps";
+    }
+  };
+
+  const getVisaInfo = () => {
+    switch(destination.name) {
+      case "Bengaluru": 
+      case "Goa":
+      case "Hyderabad": return "30-day eVisa for most nationalities";
+      case "Bangkok":
+      case "Chiang Mai": return "30-day visa-on-arrival for most visitors";
+      case "Bali": return "30-day visa-free for many nationalities";
+      case "Da Nang": return "30-day eVisa online → can extend locally for 30 more days";
+      default: return destination.visaRequirements === "easy" ? "Easy visa process" : 
+               destination.visaRequirements === "moderate" ? "Standard visa process" : "Complex visa process";
+    }
+  };
+
+  const getSafetyInfo = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "Very safe for solo travelers";
+      case "Goa": return "Generally safe, watch for tourist scams";
+      case "Hyderabad": return "Safe, use standard precautions";
+      case "Bangkok": return "Safe in tourist areas, stay alert at night";
+      case "Chiang Mai": return "Very safe, low crime rate";
+      case "Bali": return "Safe, beware of motorbike accidents";
+      case "Da Nang": return "Very safe, low crime rate, friendly locals";
+      default: return destination.safetyRating >= 4 ? "Very safe" : 
+               destination.safetyRating >= 3 ? "Mostly safe" : "Exercise caution";
+    }
+  };
+
+  const getTravelTip = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "Best coworking spaces in Indiranagar and Koramangala";
+      case "Goa": return "Avoid rainy season (June–Sept) for beach days";
+      case "Hyderabad": return "Visit the old city for authentic biryani";
+      case "Bangkok": return "Use BTS Skytrain to avoid traffic congestion";
+      case "Chiang Mai": return "Sunday Night Market is a must-visit";
+      case "Bali": return "North Bali is less crowded than South"; 
+      case "Da Nang": return "Locals love the night market near Dragon Bridge — amazing food! 🐉";
+      default: return "Check local Facebook groups for nomad meetups";
+    }
+  };
+
+  // Extended information for the detailed view
+  const getLocalFunFact = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "Known as the 'Garden City' with over 400 parks and gardens 🌳";
+      case "Goa": return "Was a Portuguese colony for 450 years until 1961 🏛️";
+      case "Hyderabad": return "Home to the world's largest film studio complex, Ramoji Film City 🎬";
+      case "Bangkok": return "Full name is longest city name in the world with 169 characters 📚";
+      case "Chiang Mai": return "Surrounded by over 300 ancient temples dating back to 1296 🏯";
+      case "Bali": return "Locals celebrate Nyepi, a 'Day of Silence' when the entire island shuts down 🤫";
+      case "Da Nang": return "Marble Mountains nearby are epic for sunrise hikes 🌄";
+      default: return "Rich in culture and history worth exploring";
+    }
+  };
+
+  const getCoworkingCafes = () => {
+    switch(destination.name) {
+      case "Bengaluru": return ["Dyu Art Cafe", "Third Wave Coffee", "Matteo Coffea"];
+      case "Goa": return ["Baba Au Rhum", "Bean Me Up", "Artjuna Cafe"];
+      case "Hyderabad": return ["Roastery Coffee House", "Autumn Leaf Cafe", "Ciclo Cafe"];
+      case "Bangkok": return ["Hubba Thailand", "The Work Loft", "Hom Hostel & Cooking Club"];
+      case "Chiang Mai": return ["The Barn", "Yellow Coworking", "Wake Up Coffee"];
+      case "Bali": return ["Dojo Bali", "Outpost", "Tropical Nomad"];
+      case "Da Nang": return ["The Espresso Station", "HeX Co-Working", "85 Design Café"];
+      default: return ["Local coffee shops", "Coworking spaces available"];
+    }
+  };
+
+  const getSimTip = () => {
+    switch(destination.name) {
+      case "Bengaluru": 
+      case "Goa":
+      case "Hyderabad": return "Jio or Airtel SIM available at airport (~$5 for 1.5GB/day)";
+      case "Bangkok":
+      case "Chiang Mai": return "AIS or True Move SIM at airport (~$15 for 15GB/week)";
+      case "Bali": return "Telkomsel SIM widely available (~$8 for 10GB)";
+      case "Da Nang": return "Grab a Viettel SIM at the airport (~$5 for 5GB/day) — super reliable";
+      default: return "Local SIM cards available at airports and convenience stores";
+    }
+  };
+
+  const getWeatherWatch = () => {
+    switch(destination.name) {
+      case "Bengaluru": return "Best time: Oct–Feb; Avoid Apr–Jun (hot)";
+      case "Goa": return "Best time: Nov–Feb; Avoid Jun–Sep (monsoon)";
+      case "Hyderabad": return "Best time: Oct–Mar; Hot summers Apr–Jun";
+      case "Bangkok": return "Best time: Nov–Feb; Hot Mar–May; Rainy Jun–Oct";
+      case "Chiang Mai": return "Best time: Nov–Feb; Smoky Mar–Apr; Rainy Jun–Oct";
+      case "Bali": return "Best time: Apr–Oct; Rainy Nov–Mar";
+      case "Da Nang": return "Best time: March–August; Rainy Sept–Nov";
+      default: return `Best time: ${destination.bestTimeToVisit.join(", ")}`;
+    }
+  };
+
+  // Collapsed view with enhanced information
+  const renderCollapsedView = () => {
     return (
-      <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-          <svg
-            key={i}
-            className={`w-4 h-4 ${i < rating ? 'text-nomad-teal' : 'text-gray-300'}`}
-            fill="currentColor"
-            viewBox="0 0 20 20"
+      <div className="p-3">
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center text-xs">
+            <span className="text-white flex items-center font-semibold">
+              <DollarSign className="h-3.5 w-3.5 mr-1 text-green-400" /> Cost: {getCostRange()}
+            </span>
+          </div>
+          <div className="flex items-center text-xs">
+            <span className="text-white flex items-center font-semibold">
+              <Wifi className="h-3.5 w-3.5 mr-1 text-blue-400" /> WiFi: {getWifiInfo()}
+            </span>
+          </div>
+          <div className="flex items-center text-xs">
+            <span className="text-white flex items-center font-semibold">
+              <Clipboard className="h-3.5 w-3.5 mr-1 text-purple-400" /> Visa: {getVisaInfo()}
+            </span>
+          </div>
+          <div className="flex items-center text-xs">
+            <span className="text-white flex items-center font-semibold">
+              <Shield className="h-3.5 w-3.5 mr-1 text-yellow-400" /> Safety: {getSafetyInfo()}
+            </span>
+          </div>
+          <div className="flex items-center text-xs">
+            <span className="text-white flex items-center font-semibold">
+              <Lightbulb className="h-3.5 w-3.5 mr-1 text-amber-400" /> Tip: {getTravelTip()}
+            </span>
+          </div>
+        </div>
+        
+        {/* Card actions */}
+        <div className="flex justify-between items-center mt-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs h-8 text-gray-300 hover:text-white bg-gray-800/80 hover:bg-gray-700/80 rounded-lg"
+            onClick={() => setIsModalOpen(true)}
           >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-        ))}
+            <Info className="h-3.5 w-3.5 mr-1.5" />
+            <span>Details</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs h-8 text-purple-400 hover:text-purple-300 bg-purple-900/20 hover:bg-purple-800/30 rounded-lg"
+          >
+            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+            <span>Explore</span>
+          </Button>
+        </div>
       </div>
     );
   };
 
-  // Helper function to render safety or economic stability rating
-  const renderRatingBar = (rating: number, color: string) => {
+  // Legacy display for backward compatibility
+  const renderLegacyView = () => {
     return (
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className={`${color} h-2 rounded-full`} 
-          style={{ width: `${rating * 10}%` }}
-        ></div>
+      <div className="p-3">
+        {/* Key stats with icons */}
+        <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-3">
+          {renderWifiIndicator(destination.internetSpeed)}
+          {renderCostIndicator(destination.costOfLiving)}
+          {renderVisaIndicator(destination.visaRequirements)}
+          {renderClimateIndicator(destination.climate)}
+          {renderCommunityIndicator(destination.nomadCommunity)}
+          <div className="flex items-center text-xs">
+            <span className="flex items-center">
+              <span className="mr-1">🛋️</span> {destination.coworkingSpaces}+ spaces
+            </span>
+          </div>
+        </div>
+        
+        {/* Card actions */}
+        <div className="flex justify-between items-center mt-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs h-8 text-gray-300 hover:text-white bg-gray-800/80 hover:bg-gray-700/80 rounded-lg"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Info className="h-3.5 w-3.5 mr-1.5" />
+            <span>Details</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs h-8 text-purple-400 hover:text-purple-300 bg-purple-900/20 hover:bg-purple-800/30 rounded-lg"
+          >
+            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+            <span>Explore</span>
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper functions for legacy rendering
+  const renderWifiIndicator = (speed: 'slow' | 'medium' | 'fast') => {
+    return (
+      <div className="flex items-center text-xs">
+        <Wifi className={`h-3.5 w-3.5 mr-1 ${
+          speed === 'fast' ? 'text-green-400' :
+          speed === 'medium' ? 'text-yellow-400' : 'text-red-400'
+        }`} />
+        <span>
+          {speed === 'fast' ? '30+ Mbps' :
+           speed === 'medium' ? '15-30 Mbps' : '<15 Mbps'}
+        </span>
+      </div>
+    );
+  };
+
+  const renderCostIndicator = (cost: 'low' | 'medium' | 'high') => {
+    return (
+      <div className="flex items-center text-xs">
+        <DollarSign className={`h-3.5 w-3.5 mr-1 ${
+          cost === 'low' ? 'text-green-400' :
+          cost === 'medium' ? 'text-yellow-400' : 'text-red-400'
+        }`} />
+        <span>{cost}</span>
+      </div>
+    );
+  };
+
+  const renderVisaIndicator = (visa: 'easy' | 'moderate' | 'difficult') => {
+    return (
+      <div className="flex items-center text-xs">
+        <Clipboard className={`h-3.5 w-3.5 mr-1 ${
+          visa === 'easy' ? 'text-green-400' :
+          visa === 'moderate' ? 'text-yellow-400' : 'text-red-400'
+        }`} />
+        <span>
+          {visa === 'easy' ? 'Easy visa' :
+           visa === 'moderate' ? 'Moderate' : 'Difficult'}
+        </span>
+      </div>
+    );
+  };
+
+  const renderClimateIndicator = (climate: 'tropical' | 'temperate' | 'arid' | 'continental') => {
+    const Icon = climate === 'tropical' || climate === 'temperate' ? Sun : CloudRain;
+    
+    return (
+      <div className="flex items-center text-xs">
+        <Icon className="h-3.5 w-3.5 mr-1 text-blue-400" />
+        <span>{climate.charAt(0).toUpperCase() + climate.slice(1)}</span>
+      </div>
+    );
+  };
+
+  const renderCommunityIndicator = (community: 'small' | 'growing' | 'large') => {
+    return (
+      <div className="flex items-center text-xs">
+        <Coffee className={`h-3.5 w-3.5 mr-1 ${
+          community === 'large' ? 'text-green-400' :
+          community === 'growing' ? 'text-yellow-400' : 'text-gray-400'
+        }`} />
+        <span>
+          {community === 'large' ? 'Large community' :
+           community === 'growing' ? 'Growing' : 'Small'}
+        </span>
       </div>
     );
   };
 
   return (
-    <div 
-      ref={cardRef}
-      className={`bg-white rounded-xl card-shadow card-shadow-hover overflow-hidden
-                 ${isExpanded ? "ring-2 ring-nomad-blue" : "cursor-pointer"}
-                 transform transition-all animate-fade-in`}
-      style={{ animationDelay: `${animationDelay}ms` }}
-      onClick={!isExpanded ? toggleExpand : undefined}
-    >
-      <div className="relative h-36 overflow-hidden">
-        <img
-          src={imageUrl || "https://images.unsplash.com/photo-1506744038136-46273834b3fb"}
-          alt={`${name}, ${country}`}
-          className="w-full h-full object-cover transition-transform hover:scale-105 duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-          <div className="absolute bottom-0 left-0 p-4">
-            <h3 className="text-white font-bold text-xl">{name}</h3>
-            <p className="text-white/80 text-sm">{country}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-4 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-gray-500">Cost of Living</p>
-            <p className="font-semibold text-nomad-dark">{costOfLiving}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">WiFi</p>
-            {renderWifiRating(wifiRating)}
-          </div>
-        </div>
-        
-        <div>
-          <p className="text-xs text-gray-500">Visa</p>
-          <p className="text-sm">{visaTip}</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-gray-500">Safety</p>
-            {renderRatingBar(safety, "bg-nomad-green")}
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Economy</p>
-            {renderRatingBar(economicStability, "bg-nomad-yellow")}
-          </div>
-        </div>
-        
-        <div className="bg-nomad-light rounded-lg p-3">
-          <p className="text-xs text-gray-500">Insider Tip</p>
-          <p className="text-sm italic">{insiderTip}</p>
-        </div>
-        
-        {isExpanded && (
-          <div className="mt-4 animate-fade-in">
-            <div className="border-t border-gray-100 pt-4">
-              <h4 className="font-medium text-lg mb-2">More about {name}</h4>
-              <p className="text-sm text-gray-700">{detailedDescription}</p>
-              
-              <div className="mt-6 space-y-3">
-                <h5 className="font-medium text-sm">Popular with Digital Nomads because:</h5>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-nomad-light p-1 rounded-full">
-                      <svg className="w-3 h-3 text-nomad-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-xs">Coworking spaces</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-nomad-light p-1 rounded-full">
-                      <svg className="w-3 h-3 text-nomad-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-xs">Nomad community</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-nomad-light p-1 rounded-full">
-                      <svg className="w-3 h-3 text-nomad-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-xs">Affordable living</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-nomad-light p-1 rounded-full">
-                      <svg className="w-3 h-3 text-nomad-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-xs">Easy local transport</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 flex justify-between">
-                <button className="bg-nomad-light text-nomad-dark text-sm px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  Explore More
-                </button>
-                <button 
-                  className="text-sm text-nomad-blue hover:text-nomad-dark transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleExpand();
-                  }}
-                >
-                  Close Details
-                </button>
+    <>
+      <div className="relative group overflow-hidden rounded-xl bg-gray-800/60 backdrop-blur-sm border border-gray-700 transition-all duration-300 hover:shadow-[0_0_15px_rgba(138,43,226,0.15)] hover:border-purple-500/30">
+        {/* Card image with gradient overlay */}
+        <div className="relative h-36 overflow-hidden">
+          <img 
+            src={destination.imageUrl} 
+            alt={destination.name} 
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-80"></div>
+          
+          {/* Location badge */}
+          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
+            <div>
+              <h3 className="text-white font-semibold">{destination.name}</h3>
+              <div className="flex items-center text-gray-300 text-xs">
+                <Map className="h-3 w-3 mr-1" />
+                <span>{destination.country}</span>
               </div>
             </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
+              onClick={() => setIsFavorite(!isFavorite)}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            </Button>
           </div>
-        )}
+        </div>
+        
+        {/* Card content */}
+        {renderCollapsedView()}
       </div>
-    </div>
+
+      {/* Modal for detailed view */}
+      {isModalOpen && (
+        <CardDetailsModal
+          destination={{
+            ...destination,
+            localFunFact: destination.localFunFact || getLocalFunFact(),
+            coworkingCafes: destination.coworkingCafes || getCoworkingCafes(),
+            simTip: destination.simTip || getSimTip(),
+            visaTip: destination.visaTip || getVisaInfo(),
+            insiderTip: destination.insiderTip || getTravelTip(),
+            weatherWatch: destination.weatherWatch || getWeatherWatch(),
+            wifiDetails: destination.wifiDetails || getWifiInfo(),
+            canSave: destination.canSave !== undefined ? destination.canSave : true,
+          }}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

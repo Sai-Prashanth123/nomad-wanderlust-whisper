@@ -1,9 +1,8 @@
-
 import React, { useRef } from 'react';
-import DestinationCard, { DestinationCardProps } from './DestinationCard';
+import DestinationCard, { Destination } from './DestinationCard';
 
 interface DestinationDeckProps {
-  destinations: Omit<DestinationCardProps, 'index'>[];
+  destinations: Destination[];
   isVisible: boolean;
 }
 
@@ -33,8 +32,7 @@ const DestinationDeck: React.FC<DestinationDeckProps> = ({ destinations, isVisib
         {destinations.map((destination, index) => (
           <DestinationCard 
             key={`${destination.name}-${index}`}
-            {...destination} 
-            index={index}
+            destination={destination}
           />
         ))}
       </div>

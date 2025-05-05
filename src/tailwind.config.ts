@@ -25,13 +25,13 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				nomad: {
-					blue: '#4FD1C5',
-					teal: '#3E8E7E',
-					yellow: '#FFD93D',
-					sand: '#FFFBF0',
-					gray: '#505050',
-					dark: '#2B4162',
-					light: '#FFFBF0',
+					blue: '#4169E1', // Royal Blue
+					purple: '#8A2BE2', // Blue Violet
+					pink: '#FF1493', // Deep Pink
+					indigo: '#6610f2', // Indigo
+					dark: '#121212', // Almost Black
+					gray: '#888888', // Medium Gray
+					light: '#f8f9fa', // Light Gray
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
@@ -106,30 +106,20 @@ export default {
 						opacity: "1"
 					}
 				},
-				"card-expand": {
+				"slide-left": {
 					"0%": {
-						height: "var(--collapsed-height)",
-						opacity: "1"
+						transform: "translateX(100%)"
 					},
 					"100%": {
-						height: "var(--expanded-height)",
-						opacity: "1"
+						transform: "translateX(0)"
 					}
 				},
-				"float": {
-					"0%, 100%": {
-						transform: "translateY(0)"
+				"slide-right": {
+					"0%": {
+						transform: "translateX(-100%)"
 					},
-					"50%": {
-						transform: "translateY(-5px)"
-					}
-				},
-				"pulse-glow": {
-					"0%, 100%": {
-						boxShadow: "0 0 5px 0 rgba(42, 157, 244, 0.5)"
-					},
-					"50%": {
-						boxShadow: "0 0 20px 5px rgba(42, 157, 244, 0.7)"
+					"100%": {
+						transform: "translateX(0)"
 					}
 				}
 			},
@@ -140,11 +130,18 @@ export default {
 				"fade-in-slow": "fade-in 0.7s ease-out",
 				"fade-out": "fade-out 0.4s ease-out",
 				"scale-in": "scale-in 0.3s ease-out",
-				"card-expand": "card-expand 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards",
-				"float": "float 3s ease-in-out infinite",
-				"pulse-glow": "pulse-glow 2s ease-in-out infinite"
+				"slide-left": "slide-left 25s linear infinite",
+				"slide-right": "slide-right 25s linear infinite"
+			},
+			backgroundImage: {
+				'gradient-primary': 'linear-gradient(to right, #4169E1, #8A2BE2)',
+				'gradient-secondary': 'linear-gradient(to right, #8A2BE2, #FF1493)',
+				'gradient-accent': 'linear-gradient(to right, #6610f2, #FF1493)',
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate"), require('tailwind-scrollbar')],
-} satisfies Config;
+	plugins: [
+		require("tailwindcss-animate"),
+		require("tailwind-scrollbar")
+	],
+} satisfies Config; 

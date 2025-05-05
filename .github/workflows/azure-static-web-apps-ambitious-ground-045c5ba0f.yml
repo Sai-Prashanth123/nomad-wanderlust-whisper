@@ -23,15 +23,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # or '16' or whatever your app requires
+          node-version: '18' # Adjust based on your project’s Node version
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./
 
-      - name: Build app
+      - name: Build Vite App
         run: npm run build
-        working-directory: ./
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -40,9 +38,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_GROUND_045C5BA0F }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/" # Where your app source is
-          api_location: "api" # Optional
-          output_location: "build" # This must match the actual output dir of your build (e.g. 'build' for React)
+          app_location: "/"               # Root folder of your app
+          api_location: "api"            # Optional - if you’re using Azure Functions
+          output_location: "dist"        # Vite outputs to 'dist' by default
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

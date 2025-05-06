@@ -18,6 +18,38 @@ import ResponseHandler, { DestinationDetail } from './ResponseHandler';
 // Define the backend API URL
 const API_URL = 'https://nomadtravel.azurewebsites.net/';
 
+// Helper function for API calls
+const callSearchAPI = async (query: string, sessionId: string | null) => {
+  const payload = {
+    query,
+    ...(sessionId && { session_id: sessionId })
+  };
+  
+  try {
+    console.log(`Making API request to ${API_URL}search with payload:`, payload);
+    const response = await fetch(`${API_URL}search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API error (${response.status}): ${errorText}`);
+      throw new Error(`Failed to get response from API: ${response.status} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('API response:', data);
+    return data;
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+};
+
 // List of common countries for quick replies when clarification is needed
 const POPULAR_COUNTRIES = [
   "India", "Thailand", "Indonesia", "Mexico", "Portugal",
@@ -137,23 +169,7 @@ const ChatHome = () => {
     
     try {
       // Call the backend API to process the prompt
-      const response = await fetch(`${API_URL}/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          query: userMessage.content
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error (${response.status}): ${errorText}`);
-        throw new Error(`Failed to get response from API: ${response.status} ${errorText.substring(0, 100)}`);
-      }
-      
-      const data = await response.json();
+      const data = await callSearchAPI(userMessage.content, chatId);
       
       // Determine if this is a travel response or general response
       const isTravelResponse = 'cities' in data && Array.isArray(data.cities) && data.cities.length > 0;
@@ -240,23 +256,7 @@ const ChatHome = () => {
     
     try {
       // Call the backend API to regenerate the response
-      const response = await fetch(`${API_URL}/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          query: lastUserMessage
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error (${response.status}): ${errorText}`);
-        throw new Error(`Failed to get response from API: ${response.status} ${errorText.substring(0, 100)}`);
-      }
-      
-      const data = await response.json();
+      const data = await callSearchAPI(lastUserMessage, activeChatId);
       
       // Determine if this is a travel response or general response
       const isTravelResponse = 'cities' in data && Array.isArray(data.cities) && data.cities.length > 0;

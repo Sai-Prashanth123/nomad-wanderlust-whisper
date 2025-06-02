@@ -43,6 +43,7 @@ import { DestinationDetailsModal } from './DestinationDetailsModal';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { DestinationDeck } from './DestinationDeck';
 
 // Define destination detail type
 export interface DestinationDetail {
@@ -51,7 +52,7 @@ export interface DestinationDetail {
   country: string;
   imageUrl: string;
   description: string;
-  costOfLiving: string;
+  costOfLiving: 'low' | 'medium' | 'high';
   internetSpeed: string;
   visaRequirements: string;
   climate: string;
@@ -60,14 +61,18 @@ export interface DestinationDetail {
   safetyRating: number;
   monthlyRent: string;
   coworkingSpaces: number;
+  wifiRating?: number;
+  visaInfo?: string;
+  safetySummary?: string;
+  travelTip?: string;
   localFunFact?: string;
   coworkingCafes?: string[];
   simTip?: string;
-  wifiDetails?: string;
   visaTip?: string;
   insiderTip?: string;
   weatherWatch?: string;
-  reasonForMatch?: string;
+  wifiDetails?: string;
+  canSave?: boolean;
 }
 
 // Context for managing favorites
@@ -248,11 +253,20 @@ export const FavoritesProvider: React.FC<{children: React.ReactNode}> = ({ child
 
 // Props for the ResponseHandler component
 interface ResponseHandlerProps {
-  content: string;
-  isTravel: boolean;
-  destinations?: DestinationDetail[];
-  onRateMessage: (rating: 'up' | 'down') => void;
-  onCopyMessage: (content: string) => void;
+  response?: string;
+  isLoading?: boolean;
+  onNewMessage?: (message: {
+    id: string;
+    content: string;
+    role: string;
+    timestamp: Date;
+    hasDestinations?: boolean;
+    destinations?: DestinationDetail[];
+    isTravel?: boolean;
+  }) => void;
+  onError?: (error: string) => void;
+  onDestinationsLoaded?: (destinations: DestinationDetail[]) => void;
+  onDestinationsError?: (error: string) => void;
 }
 
 // Card component for displaying destination previews
@@ -1132,75 +1146,101 @@ export const FavoritesSidebar: React.FC<{
 };
 
 // Main ResponseHandler component
-const ResponseHandler: React.FC<ResponseHandlerProps> = ({ 
-  content, 
-  isTravel, 
-  destinations = [], 
-  onRateMessage, 
-  onCopyMessage 
+export const ResponseHandler: React.FC<ResponseHandlerProps> = ({
+  response,
+  isLoading,
+  onNewMessage,
+  onError,
+  onDestinationsLoaded,
+  onDestinationsError
 }) => {
-  // Log destinations for debugging
-  React.useEffect(() => {
-    if (isTravel && destinations.length > 0) {
-      console.log("ResponseHandler received destinations:", destinations);
-    }
-  }, [isTravel, destinations]);
-  
+  const [destinations, setDestinations] = useState<DestinationDetail[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<string>('');
+
+  useEffect(() => {
+    if (!response) return;
+
+    const processResponse = async () => {
+      setError(null);
+
+      try {
+        // Parse the response
+        const parsedResponse = JSON.parse(response);
+        console.log('Parsed response:', parsedResponse);
+
+        // Set the AI response text
+        setAiResponse(parsedResponse.friendlyAiReply || '');
+
+        // Check if we have destinations in the response
+        if (parsedResponse.cities && Array.isArray(parsedResponse.cities)) {
+          setDestinations(parsedResponse.cities);
+          onDestinationsLoaded?.(parsedResponse.cities);
+
+          // Create a message with destinations
+          onNewMessage({
+            id: Date.now().toString(),
+            content: parsedResponse.friendlyAiReply || 'Here are some destinations you might like:',
+            role: 'assistant',
+            timestamp: new Date(),
+            hasDestinations: true,
+            destinations: parsedResponse.cities,
+            isTravel: true
+          });
+        } else {
+          // Regular message without destinations
+          onNewMessage({
+            id: Date.now().toString(),
+            content: parsedResponse.friendlyAiReply || response,
+            role: 'assistant',
+            timestamp: new Date()
+          });
+        }
+      } catch (err) {
+        console.error('Error processing response:', err);
+        setError('Failed to process the response');
+        onDestinationsError?.('Failed to process destinations');
+        
+        // Still show the response as a regular message
+        onNewMessage({
+          id: Date.now().toString(),
+          content: response,
+          role: 'assistant',
+          timestamp: new Date()
+        });
+      }
+    };
+
+    processResponse();
+  }, [response, onNewMessage, onDestinationsLoaded, onDestinationsError]);
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
+  if (isLoading) {
+    return <div className="text-gray-500">Processing response...</div>;
+  }
+
   return (
-    <div className="w-full">
-      {/* Message content */}
-      <div className="text-gray-200 whitespace-pre-wrap leading-relaxed mb-4">
-        {content}
-      </div>
-      
-      {/* Action buttons */}
-      <div className="flex items-center mt-2 space-x-1">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-md text-gray-400 hover:text-white hover:bg-gray-800"
-          onClick={() => onRateMessage('up')}
-        >
-          <ThumbsUp className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-md text-gray-400 hover:text-white hover:bg-gray-800"
-          onClick={() => onRateMessage('down')}
-        >
-          <ThumbsDown className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-md text-gray-400 hover:text-white hover:bg-gray-800"
-          onClick={() => onCopyMessage(content)}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Destination cards (only for travel responses) */}
-      {isTravel && destinations && destinations.length > 0 ? (
-        <div className="mt-10 relative">
-          {/* Decorative elements */}
-          <div className="absolute -z-10 top-0 left-1/2 transform -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-purple-900/5 to-transparent rounded-3xl blur-3xl"></div>
-          
-          <DestinationCardDeck destinations={destinations} />
+    <>
+      {/* AI Response Container */}
+      <div className="w-full bg-white rounded-lg shadow-sm p-4 mb-8">
+        <div className="prose prose-sm max-w-none">
+          {aiResponse}
         </div>
-      ) : isTravel ? (
-        <div className="mt-8 p-6 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-700 shadow-lg">
-          <div className="flex flex-col items-center text-center">
-            <MapPin className="h-8 w-8 text-gray-500 mb-3" />
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">Destination data unavailable</h3>
-            <p className="text-gray-400 max-w-md">
-              This is a travel response, but destination information couldn't be loaded. Try refreshing or asking for specific destinations.
-            </p>
-          </div>
+      </div>
+
+      {/* Destinations Grid - Completely Separate from Response */}
+      {destinations.length > 0 && (
+        <div className="w-full">
+          <DestinationDeck
+            destinations={destinations}
+            className="bg-gray-50"
+          />
         </div>
-      ) : null}
-    </div>
+      )}
+    </>
   );
 };
 

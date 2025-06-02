@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 type ProtectedRouteProps = {
   children: ReactNode;
+  requireAuth?: boolean;
 };
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, requireAuth = false }: ProtectedRouteProps) => {
   const { currentUser, loading } = useAuth();
+  const location = useLocation();
 
   // Show loading state or spinner while checking auth state
   if (loading) {
@@ -18,9 +20,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Always redirect to login if user is not authenticated
+  // This removes the guest functionality
   if (!currentUser) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} />;
   }
 
   // If authenticated, render the children components

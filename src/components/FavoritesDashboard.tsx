@@ -96,10 +96,10 @@ const FavoritesDashboard: React.FC<{
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col bg-gray-900 text-white border-gray-700">
-        <DialogHeader className="flex justify-between items-center border-b border-gray-800 mb-4 pb-3">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900 border-gray-200">
+        <DialogHeader className="flex justify-between items-center border-b border-gray-200 mb-4 pb-3">
           <DialogTitle className="text-2xl font-bold flex items-center">
-            <Heart className="h-5 w-5 text-pink-500 mr-2" fill="#ec4899" />
+            <Heart className="h-5 w-5 text-[#C66E4F] mr-2" fill="#C66E4F" />
             <span>Favorite Destinations</span>
           </DialogTitle>
           <DialogClose className="absolute right-4 top-4">
@@ -114,11 +114,11 @@ const FavoritesDashboard: React.FC<{
             placeholder="Search your favorites..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 rounded-lg pr-8 w-full"
+            className="bg-white border-gray-200 text-gray-900 placeholder-gray-400 rounded-lg pr-8 w-full"
           />
           {searchTerm && (
             <button 
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               onClick={clearSearch}
               aria-label="Clear search"
             >
@@ -131,25 +131,25 @@ const FavoritesDashboard: React.FC<{
         <div className="flex-1 overflow-y-auto pb-4 pr-1">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 text-pink-500 animate-spin mb-4" />
-              <p className="text-gray-400">Loading your favorites...</p>
+              <Loader2 className="h-8 w-8 text-[#C66E4F] animate-spin mb-4" />
+              <p className="text-gray-600">Loading your favorites...</p>
             </div>
           ) : filteredFavorites.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center p-6">
               {searchTerm ? (
                 <>
-                  <Search className="h-12 w-12 text-gray-600 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">No matching favorites found</h3>
+                  <Search className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No matching favorites found</h3>
                   <p className="text-gray-500 text-sm max-w-md">
                     Try a different search term or clear your search
                   </p>
                 </>
               ) : (
                 <>
-                  <div className="bg-gray-800/50 p-6 rounded-full mb-4">
-                    <Heart className="h-12 w-12 text-gray-600" />
+                  <div className="bg-gray-100 p-6 rounded-full mb-4">
+                    <Heart className="h-12 w-12 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">No favorites yet</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No favorites yet</h3>
                   <p className="text-gray-500 text-sm max-w-md">
                     Click the heart icon on any destination card to add it to your favorites
                   </p>
@@ -161,10 +161,10 @@ const FavoritesDashboard: React.FC<{
               {filteredFavorites.map(destination => (
                 <div 
                   key={destination.id}
-                  className="group relative rounded-xl overflow-hidden backdrop-blur-sm bg-gradient-to-br from-gray-800/90 to-gray-900/90 border border-gray-700 shadow-lg hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-indigo-500/50"
+                  className="group relative rounded-xl overflow-hidden backdrop-blur-sm bg-white border border-gray-200 shadow-lg hover:shadow-2xl transform transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-[#C66E4F]/50"
                 >
                   {/* Premium glass effect overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#C66E4F]/10 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Image container with overlay */}
                   <div className="relative w-full h-48 overflow-hidden">
@@ -174,11 +174,11 @@ const FavoritesDashboard: React.FC<{
                       className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110 filter group-hover:brightness-110"
                     />
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-60"></div>
                     
                     {/* Remove from favorites button */}
                     <button 
-                      className="absolute top-3 right-3 p-2 bg-pink-500/60 backdrop-blur-sm rounded-full text-white hover:bg-red-500/60 transform transition-all duration-300 hover:scale-110 border border-pink-400/50 hover:border-red-400/50 shadow-md"
+                      className="absolute top-3 right-3 p-2 bg-[#C66E4F]/60 backdrop-blur-sm rounded-full text-white hover:bg-[#C66E4F] transform transition-all duration-300 hover:scale-110 border border-white/50 hover:border-white shadow-md"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeFavorite(destination.id);
@@ -188,8 +188,8 @@ const FavoritesDashboard: React.FC<{
                     </button>
                     
                     {/* Location badge */}
-                    <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1 text-xs text-white font-medium border border-white/10">
-                      <MapPin className="h-3 w-3 text-purple-400" />
+                    <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1 text-xs text-gray-900 font-medium border border-gray-200/10">
+                      <MapPin className="h-3 w-3 text-[#C66E4F]" />
                       <span>{destination.country}</span>
                     </div>
                   </div>
@@ -197,42 +197,42 @@ const FavoritesDashboard: React.FC<{
                   {/* Content area */}
                   <div className="p-4">
                     {/* City name with animated underline effect */}
-                    <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-200 pb-1 relative inline-block">
+                    <h3 className="text-xl font-bold text-gray-900 pb-1 relative inline-block">
                       {destination.name}
-                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 group-hover:w-full transition-all duration-300 ease-in-out"></span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#C66E4F] to-[#B85E34] group-hover:w-full transition-all duration-300 ease-in-out"></span>
                     </h3>
                     
                     {/* Stats grid with premium styling */}
                     <div className="grid grid-cols-2 gap-2 my-3">
-                      <div className="bg-gray-800/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-gray-700/50 group-hover:border-purple-500/30 transition-all duration-300">
+                      <div className="bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 group-hover:border-[#C66E4F]/30 transition-all duration-300">
                         <div className="flex items-center text-xs">
                           <DollarSign className={`h-3 w-3 mr-1 ${getCostColor(destination.costOfLiving)}`} />
-                          <span className="text-gray-400">Cost:</span>
-                          <span className="ml-1 text-white">{destination.costOfLiving}</span>
+                          <span className="text-gray-500">Cost:</span>
+                          <span className="ml-1 text-gray-900">{destination.costOfLiving}</span>
                         </div>
                       </div>
                       
-                      <div className="bg-gray-800/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-gray-700/50 group-hover:border-blue-500/30 transition-all duration-300">
+                      <div className="bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 group-hover:border-[#C66E4F]/30 transition-all duration-300">
                         <div className="flex items-center text-xs">
                           <Wifi className={`h-3 w-3 mr-1 ${getInternetColor(destination.internetSpeed)}`} />
-                          <span className="text-gray-400">WiFi:</span>
-                          <span className="ml-1 text-white">{destination.internetSpeed.split(' ')[0]}</span>
+                          <span className="text-gray-500">WiFi:</span>
+                          <span className="ml-1 text-gray-900">{destination.internetSpeed.split(' ')[0]}</span>
                         </div>
                       </div>
                       
-                      <div className="bg-gray-800/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-gray-700/50 group-hover:border-green-500/30 transition-all duration-300">
+                      <div className="bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 group-hover:border-[#C66E4F]/30 transition-all duration-300">
                         <div className="flex items-center text-xs">
                           <Globe className={`h-3 w-3 mr-1 ${getVisaColor(destination.visaRequirements)}`} />
-                          <span className="text-gray-400">Visa:</span>
-                          <span className="ml-1 text-white">{destination.visaRequirements.split(' ')[0]}</span>
+                          <span className="text-gray-500">Visa:</span>
+                          <span className="ml-1 text-gray-900">{destination.visaRequirements.split(' ')[0]}</span>
                         </div>
                       </div>
                       
-                      <div className="bg-gray-800/50 backdrop-blur-sm px-2 py-1 rounded-lg border border-gray-700/50 group-hover:border-yellow-500/30 transition-all duration-300">
+                      <div className="bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 group-hover:border-[#C66E4F]/30 transition-all duration-300">
                         <div className="flex items-center text-xs">
                           <Shield className={`h-3 w-3 mr-1 ${getSafetyColor(destination.safetyRating)}`} />
-                          <span className="text-gray-400">Safety:</span>
-                          <span className="ml-1 text-white">{destination.safetyRating}/5</span>
+                          <span className="text-gray-500">Safety:</span>
+                          <span className="ml-1 text-gray-900">{destination.safetyRating}/5</span>
                         </div>
                       </div>
                     </div>
@@ -241,10 +241,10 @@ const FavoritesDashboard: React.FC<{
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="w-full mt-2 text-gray-300 hover:text-white hover:bg-gray-700/70 transition-all duration-300"
+                      className="w-full mt-2 text-gray-600 hover:text-[#C66E4F] hover:bg-[#C66E4F]/5 transition-all duration-300"
                       onClick={() => handleViewDetails(destination)}
                     >
-                      <Info className="h-4 w-4 mr-1.5 text-blue-400" /> 
+                      <Info className="h-4 w-4 mr-1.5 text-[#C66E4F]" /> 
                       <span>View Details</span>
                     </Button>
                   </div>

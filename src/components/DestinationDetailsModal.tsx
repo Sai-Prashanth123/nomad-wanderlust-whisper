@@ -1,192 +1,271 @@
 import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import {
   X,
-  DollarSign,
+  MapPin,
   Wifi,
-  Globe,
   Shield,
-  Umbrella,
+  DollarSign,
+  Globe,
+  Calendar,
+  Coffee,
+  Smartphone,
   Building,
   Users,
-  Calendar,
-  Award,
-  MessageSquare,
-  Smartphone,
-  ThermometerSnowflake,
-  CheckCircle,
-  Map
+  Info,
+  Star
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { DestinationDetail } from './ResponseHandler';
 
-// Destination details modal component
-export const DestinationDetailsModal: React.FC<{
+interface DestinationDetailsModalProps {
   destination: DestinationDetail | null;
   open: boolean;
   onClose: () => void;
-}> = ({ destination, open, onClose }) => {
+}
+
+export const DestinationDetailsModal: React.FC<DestinationDetailsModalProps> = ({
+  destination,
+  open,
+  onClose
+}) => {
+  if (!destination) return null;
+
+  const handleStartPlanning = () => {
+    const event = new CustomEvent('startPlanning', {
+      detail: { destinationId: destination.id }
+    });
+    document.dispatchEvent(event);
+    onClose();
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-3 w-3 ${star <= Math.floor(rating) ? 'text-orange-400 fill-orange-400' : 'text-gray-300'
+              }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700">
-        {destination ? (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-white">
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className="bg-gray-50 text-gray-900 p-0 overflow-hidden max-w-md mx-auto border-2 border-blue-500"
+        style={{
+          maxWidth: '580px',
+          maxHeight: '85vh',
+          borderRadius: '12px'
+        }}
+      >
+        {/* Top section - Image on left, destination info on right */}
+        <div className="p-4">
+          <div className="flex gap-3 mb-4">
+            {/* Image - Left side */}
+            <div className="w-[252px] h-[145px] flex-shrink-0">
+              <img
+                src={destination.imageUrl}
+                alt={destination.name}
+                className="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+
+            {/* Destination info - Right side */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">
                 {destination.name}
-              </DialogTitle>
-              <DialogClose className="absolute right-4 top-4">
-                <X className="h-4 w-4" />
-              </DialogClose>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="rounded-lg overflow-hidden mb-4">
-                  <img
-                    src={destination.imageUrl}
-                    alt={destination.name}
-                    className="w-full h-64 object-cover"
-                  />
-                </div>
+              </h1>
 
-                <h3 className="text-lg font-semibold mb-2">Quick Facts</h3>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1 text-green-400" />
-                    <span>Monthly Rent: {destination.monthlyRent}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Wifi className="h-4 w-4 mr-1 text-blue-400" />
-                    <span>Internet: {destination.internetSpeed}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Globe className="h-4 w-4 mr-1 text-purple-400" />
-                    <span>Visa: {destination.visaRequirements}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Shield className="h-4 w-4 mr-1 text-yellow-400" />
-                    <span>Safety: {destination.safetyRating}/5</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Umbrella className="h-4 w-4 mr-1 text-cyan-400" />
-                    <span>Climate: {destination.climate}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 mr-1 text-indigo-400" />
-                    <span>Coworking: {destination.coworkingSpaces}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-start">
-                    <ThermometerSnowflake className="h-4 w-4 mr-2 mt-1 text-cyan-400" />
-                    <div>
-                      <span className="font-medium">Weather Watch</span>
-                      <p className="text-gray-400 text-sm">{destination.weatherWatch}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <Calendar className="h-4 w-4 mr-2 mt-1 text-green-400" />
-                    <div>
-                      <span className="font-medium">Best Time to Visit</span>
-                      <p className="text-gray-400 text-sm">{destination.bestTimeToVisit.join(', ')}</p>
-                    </div>
-                  </div>
-
-                </div>
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-base font-semibold">{destination.safetyRating.toFixed(1)}</span>
+                {renderStars(destination.safetyRating)}
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-2">About {destination.name}</h3>
-                <p className="text-gray-300 mb-4">{destination.description}</p>
+              <p className="text-gray-700 text-xs leading-relaxed line-clamp-3">
+                {destination.description || `Discover ${destination.name}, a unique destination perfect for digital nomads and travelers.`}
+              </p>
+            </div>
+          </div>
 
-                <h3 className="text-lg font-semibold mb-2">Digital Nomad Info</h3>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-start">
-                    <Users className="h-4 w-4 mr-2 mt-1 text-blue-400" />
-                    <div>
-                      <span className="font-medium">Nomad Community</span>
-                      <p className="text-gray-400 text-sm">{destination.nomadCommunity}</p>
-                    </div>
+          {/* Main content in two columns */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Digital Nomad Info column */}
+            <div>
+              <h2 className="text-sm font-semibold mb-3 text-gray-900">{destination.name} Info</h2>
+
+              <div className="space-y-2">
+                {/* Nomad Community */}
+                <div className="flex items-start space-x-2">
+                  <Users className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-xs text-gray-700">{destination.name} Community</p>
+                    <p className="text-xs text-black leading-tight font-medium">
+                      {destination.nomadCommunity || "Growing digital nomad community"}
+                    </p>
                   </div>
-
-                  {destination.wifiDetails && (
-                    <div className="flex items-start">
-                      <Wifi className="h-4 w-4 mr-2 mt-1 text-blue-400" />
-                      <div>
-                        <span className="font-medium">WiFi Details</span>
-                        <p className="text-gray-400 text-sm">{destination.wifiDetails}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {destination.simTip && (
-                    <div className="flex items-start">
-                      <Smartphone className="h-4 w-4 mr-2 mt-1 text-orange-400" />
-                      <div>
-                        <span className="font-medium">SIM Card Tip</span>
-                        <p className="text-gray-400 text-sm">{destination.simTip}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {destination.visaTip && (
-                    <div className="flex items-start">
-                      <Globe className="h-4 w-4 mr-2 mt-1 text-purple-400" />
-                      <div>
-                        <span className="font-medium">Visa Tip</span>
-                        <p className="text-gray-400 text-sm">{destination.visaTip}</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-start">
-                    <Award className="h-4 w-4 mr-2 mt-1 text-yellow-400" />
-                    <div>
-                      <span className="font-medium">Insider Tip</span>
-                      <p className="text-gray-400 text-sm">{destination.insiderTip}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <MessageSquare className="h-4 w-4 mr-2 mt-1 text-purple-400" />
-                    <div>
-                      <span className="font-medium">Fun Fact</span>
-                      <p className="text-gray-400 text-sm">{destination.localFunFact}</p>
-                    </div>
-                  </div>
-
-
                 </div>
 
-                <div className="flex justify-end mt-4">
-                  <Button
-                    onClick={onClose}
-                    variant="outline"
-                    className="mr-2 border-gray-700 text-white hover:bg-gray-700"
-                  >
-                    Close
-                  </Button>
-                  <Button
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    onClick={() => {
-                      // Close this modal and open planning
-                      onClose();
-                      // We need to trigger planning from the parent component
-                      document.dispatchEvent(new CustomEvent('startPlanning', { detail: { destinationId: destination.id } }));
-                    }}
-                  >
-                    Start Planning
-                  </Button>
+                {/* Wi-Fi Details */}
+                <div className="flex items-start space-x-2">
+                  <Wifi className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-xs text-gray-700">Wi-Fi Details</p>
+                    <p className="text-xs text-black leading-tight font-medium">
+                      {destination.wifiDetails || "Wi-Fi available in most hotels and cafes"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* SIM card tip */}
+                <div className="flex items-start space-x-2">
+                  <Smartphone className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-xs text-gray-700">SIM card tip</p>
+                    <p className="text-xs text-black leading-tight font-medium">
+                      {destination.simTip || "Check visa requirements for your nationality"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Visa tip */}
+                <div className="flex items-start space-x-2">
+                  <Globe className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-xs text-gray-700">Visa tip</p>
+                    <p className="text-xs text-black leading-tight font-medium">
+                      {destination.visaTip || "Check visa requirements for your nationality"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Insider tip */}
+                <div className="flex items-start space-x-2">
+                  <Info className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-xs text-gray-700">Insider tip</p>
+                    <p className="text-xs text-black leading-tight font-medium">
+                      {destination.insiderTip || `Explore ${destination.name} like a local for the best experience`}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="py-8 text-center">
-            <div className="animate-spin mb-4 mx-auto h-8 w-8 border-2 border-gray-600 border-t-purple-500 rounded-full"></div>
-            <p className="text-gray-400">Loading destination details...</p>
+
+            {/* Quick Facts column */}
+            <div>
+              <h2 className="text-sm font-semibold mb-3 text-gray-900">Quick Facts</h2>
+
+              <div className="grid grid-cols-2 gap-x-3">
+                {/* Left column */}
+
+                <div className="space-y-2">
+                  {/* Monthly Rent */}
+                  <div className="flex items-start space-x-2">
+                    <DollarSign className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Monthly Rent</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.monthlyRent || "Varies by location"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Internet */}
+                  <div className="flex items-start space-x-2">
+                    <Wifi className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Internet</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.internetSpeed || "Good"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Visa */}
+                  <div className="flex items-start space-x-2">
+                    <Globe className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Visa</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.visaRequirements || "Check requirements"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right column */}
+                <div className="space-y-2">
+                  {/* Co-working */}
+                  <div className="flex items-start space-x-2">
+                    <Building className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Co-working</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.coworkingSpaces || "Limited"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Safety */}
+                  <div className="flex items-start space-x-2">
+                    <Shield className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Safety</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.safetyRating.toFixed(1)}/5
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Best time to visit */}
+                  <div className="flex items-start space-x-2">
+                    <Calendar className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-xs text-gray-700">Best time to visit</p>
+                      <p className="text-xs text-black leading-tight font-medium">
+                        {destination.bestTimeToVisit || "Year-round"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fun fact */}
+              <div className="flex items-start space-x-2 mt-2">
+                <Info className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-xs text-gray-700">Fun fact</p>
+                  <p className="text-xs text-black leading-tight font-medium">
+                    {destination.localFunFact || `${destination.name} offers unique experiences for every traveler`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="border-gray-300 bg-white hover:bg-gray-50 text-sm h-9"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleStartPlanning}
+                  className="bg-[#C66E4E] hover:bg-[#b66245] text-white text-sm h-9"
+                >
+                  Start Planning
+                </Button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
-}; 
+};

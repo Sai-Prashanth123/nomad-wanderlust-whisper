@@ -25,11 +25,11 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				nomad: {
-					blue: '#4169E1', // Royal Blue
-					purple: '#8A2BE2', // Blue Violet
-					pink: '#FF1493', // Deep Pink
-					indigo: '#6610f2', // Indigo
-					dark: '#121212', // Almost Black
+					orange: '#C66E4E', // Primary Orange
+					darkOrange: '#B25A3A', // Darker Orange
+					lightOrange: '#D88C70', // Light Orange
+					brown: '#8B4513', // Brown Accent
+					dark: '#333333', // Dark Gray
 					gray: '#888888', // Medium Gray
 					light: '#f8f9fa', // Light Gray
 				},
@@ -134,9 +134,9 @@ export default {
 				"slide-right": "slide-right 25s linear infinite"
 			},
 			backgroundImage: {
-				'gradient-primary': 'linear-gradient(to right, #4169E1, #8A2BE2)',
-				'gradient-secondary': 'linear-gradient(to right, #8A2BE2, #FF1493)',
-				'gradient-accent': 'linear-gradient(to right, #6610f2, #FF1493)',
+				'gradient-primary': 'linear-gradient(to right, #C66E4E, #B25A3A)',
+				'gradient-secondary': 'linear-gradient(to right, #B25A3A, #8B4513)',
+				'gradient-accent': 'linear-gradient(to right, #D88C70, #B25A3A)',
 			}
 		}
 	},

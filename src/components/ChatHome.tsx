@@ -1,22 +1,47 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Mic, 
-  Plus, 
+import {
+  Mic,
+  Plus,
   ChevronDown,
   Bot,
   Loader2,
-  MapPin
+  MapPin,
+  User,
+  Heart,
+  DollarSign,
+  Wifi,
+  Globe,
+  Shield
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from './ChatUI';
 import { useChatContext, Destination } from './Layout';
 import { useAuth } from '@/hooks/useAuth';
-import ResponseHandler, { DestinationDetail } from './ResponseHandler';
+import ResponseHandler, { DestinationDetail, FavoritesContext } from './ResponseHandler';
+import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import GuestWelcome from './GuestWelcome';
+import { DestinationDetailsModal } from './DestinationDetailsModal';
+import FavoritesDashboard from './FavoritesDashboard';
+import TripPlanningModal from './TripPlanningModal';
+
+// Utility functions for formatting destination card data
+const getCostColor = (cost: string) => {
+  if (cost.toLowerCase() === 'low') return 'text-green-400';
+  if (cost.toLowerCase() === 'medium') return 'text-yellow-400';
+  return 'text-red-400';
+};
+
+const getInternetColor = (internet: string) => {
+  if (internet.toLowerCase().includes('fast')) return 'text-green-400';
+  if (internet.toLowerCase().includes('moderate')) return 'text-yellow-400';
+  return 'text-red-400';
+};
 
 // Define the backend API URL
-const API_URL = 'https://nomadtravel.azurewebsites.net/';
+const API_URL = 'http://localhost:8000/';
 
 // Helper function for API calls
 const callSearchAPI = async (query: string, sessionId: string | null) => {
@@ -24,7 +49,7 @@ const callSearchAPI = async (query: string, sessionId: string | null) => {
     query,
     ...(sessionId && { session_id: sessionId })
   };
-  
+
   try {
     console.log(`Making API request to ${API_URL}search with payload:`, payload);
     const response = await fetch(`${API_URL}search`, {
@@ -34,13 +59,13 @@ const callSearchAPI = async (query: string, sessionId: string | null) => {
       },
       body: JSON.stringify(payload),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}): ${errorText}`);
       throw new Error(`Failed to get response from API: ${response.status} ${errorText}`);
     }
-    
+
     const data = await response.json();
     console.log('API response:', data);
     return data;
@@ -68,8 +93,8 @@ const isClarificationRequest = (content: string): boolean => {
     "specify which country",
     "could you tell me which"
   ];
-  
-  return clarificationPhrases.some(phrase => 
+
+  return clarificationPhrases.some(phrase =>
     content.toLowerCase().includes(phrase)
   );
 };
@@ -81,35 +106,50 @@ interface MessageWithDestinations extends Message {
 }
 
 const ChatHome = () => {
-  const { 
-    chatSessions, 
-    activeChatId, 
-    isNewChatActive, 
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<DestinationDetail | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [favoritesDashboardOpen, setFavoritesDashboardOpen] = useState(false);
+  const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const {
+    chatSessions,
+    activeChatId,
+    isNewChatActive,
     loading,
     updateChatMessages,
     createNewChat,
     updateChatDestinations
   } = useChatContext();
-  
-  const { currentUser } = useAuth();
-  const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [showScrollDown, setShowScrollDown] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
+
+  const { currentUser, isGuestUser } = useAuth();
+
+  // Get favorites context
+  const { toggleFavorite, isFavorite } = useContext(FavoritesContext);
+
   // Get current chat's messages
   const currentChatSession = chatSessions.find(chat => chat.id === activeChatId);
   const messages = currentChatSession ? currentChatSession.messages : [];
-  
+
+  // Get user's name from email (take everything before @)
+  const userName = currentUser?.email
+    ? currentUser.email.split('@')[0].split('.').map(part =>
+      part.charAt(0).toUpperCase() + part.slice(1)
+    ).join(' ')
+    : 'Guest';
+
   // Update chat destinations when active chat changes
   useEffect(() => {
     if (currentChatSession && currentChatSession.destinations && currentChatSession.destinations.length > 0) {
       console.log(`Loaded ${currentChatSession.destinations.length} destinations for chat ${activeChatId}`);
-      
+
       // Find the latest travel message with destinations and update it if needed
       const travelMessages = messages.filter(msg => msg.isTravel && (!msg.destinations || msg.destinations.length === 0));
-      
+
       if (travelMessages.length > 0) {
         console.log("Found travel messages without destination data, updating from chat-level data");
         const updatedMessages = messages.map(msg => {
@@ -121,19 +161,34 @@ const ChatHome = () => {
           }
           return msg;
         });
-        
+
         if (activeChatId) {
           updateChatMessages(activeChatId, updatedMessages);
         }
       }
     }
   }, [activeChatId, currentChatSession]);
-  
+
+  // Update scroll detection for window scrolling
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      const scrollPosition = window.scrollY;
+      const scrollHeight = document.body.scrollHeight;
+      const windowHeight = window.innerHeight;
+
+      // Show scroll button when not near the bottom
+      setShowScrollDown(scrollHeight - scrollPosition - windowHeight > 100);
+    };
+
+    window.addEventListener('scroll', handleWindowScroll);
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, []);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -141,84 +196,80 @@ const ChatHome = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || !currentUser) return;
-    
-    // If there's no active chat, create a new one
-    let chatId = activeChatId;
-    if (!chatId) {
-      chatId = createNewChat();
-      if (!chatId) return; // Exit if chat creation failed
-    }
-    
-    // Create a copy of the current messages
-    const updatedMessages = [...messages];
-    
-    // Add user message
-    const userMessage: Message = {
-      id: uuidv4(),
-      content: inputValue,
-      role: 'user',
-      timestamp: new Date()
-    };
-    
-    updatedMessages.push(userMessage);
-    // Update the chat with the new message
-    updateChatMessages(chatId, updatedMessages);
-    
-    setInputValue('');
-    setIsTyping(true);
-    
+
+    setIsTyping(true); // Set typing state before chat creation
+
     try {
-      // Call the backend API to process the prompt
-      const data = await callSearchAPI(userMessage.content, chatId);
-      
-      // Determine if this is a travel response or general response
-      const isTravelResponse = 'cities' in data && Array.isArray(data.cities) && data.cities.length > 0;
-      
-      // Create AI response message with travel flag and destinations if applicable
-      const aiMessage: Message = {
-        id: uuidv4(),
-        content: data.friendlyAiReply || data.query || "I found some information for you!",
-        role: 'assistant',
-        timestamp: new Date(),
-        isTravel: isTravelResponse,
-        destinations: isTravelResponse ? data.cities : undefined
-      };
-      
-      // Update chat with AI response
-      const finalMessages = [...updatedMessages, aiMessage];
-      updateChatMessages(chatId, finalMessages);
-      
-      // Also update the chat context destinations for backward compatibility if it's a travel response
-      if (isTravelResponse && Array.isArray(data.cities)) {
-        try {
-          const destinations: Destination[] = data.cities.map((dest: any) => ({
-            ...dest,
-            image: dest.imageUrl || ''
-          }));
-          
-          updateChatDestinations(chatId, destinations);
-        } catch (destError) {
-          console.error('Error processing destinations:', destError);
+      // If there's no active chat, create a new one
+      let chatId = activeChatId;
+      if (!chatId) {
+        const newChatId = await createNewChat();
+        if (!newChatId) {
+          setIsTyping(false); // Reset typing state if chat creation fails
+          return;
         }
+        chatId = newChatId;
       }
-      
-    } catch (error) {
-      console.error('Error processing prompt:', error);
-      
-      // Fallback response in case of API error with more specific message
-      const errorMessage: Message = {
+
+      // Create a copy of the current messages
+      const currentMessages = currentChatSession?.messages || [];
+      const updatedMessages = [...currentMessages];
+
+      // Add user message
+      const userMessage: Message = {
         id: uuidv4(),
-        content: error instanceof Error && error.message.includes('travel')
-          ? "I'm having trouble finding travel destinations right now. Could you try a more general query or try again later?"
-          : "I'm sorry, I encountered an error processing your request. Please try again with a different question.",
-        role: 'assistant',
-        timestamp: new Date(),
-        isTravel: false
+        content: inputValue,
+        role: 'user',
+        timestamp: new Date()
       };
-      
-      // Update chat with error message
-      const finalMessages = [...updatedMessages, errorMessage];
-      updateChatMessages(chatId, finalMessages);
+
+      updatedMessages.push(userMessage);
+      // Update the chat with the new message
+      updateChatMessages(chatId, updatedMessages);
+
+      setInputValue('');
+
+      try {
+        // Call the backend API to process the prompt
+        const data = await callSearchAPI(userMessage.content, chatId);
+
+        // Determine if this is a travel response or general response
+        const isTravelResponse = 'cities' in data && Array.isArray(data.cities) && data.cities.length > 0;
+
+        // Create AI response message with travel flag and destinations if applicable
+        const aiMessage: Message = {
+          id: uuidv4(),
+          content: data.friendlyAiReply || data.query || "I found some information for you!",
+          role: 'assistant',
+          timestamp: new Date(),
+          isTravel: isTravelResponse,
+          destinations: isTravelResponse ? data.cities : undefined
+        };
+
+        // Update messages with AI response
+        const newMessages = [...updatedMessages, aiMessage];
+        updateChatMessages(chatId, newMessages);
+
+        // Update chat destinations if this is a travel response
+        if (isTravelResponse && data.cities) {
+          updateChatDestinations(chatId, data.cities);
+        }
+
+      } catch (error) {
+        console.error('Error getting AI response:', error);
+
+        // Add error message to chat
+        const errorMessage: Message = {
+          id: uuidv4(),
+          content: "I apologize, but I encountered an error processing your request. Please try again.",
+          role: 'assistant',
+          timestamp: new Date()
+        };
+
+        updateChatMessages(chatId, [...updatedMessages, errorMessage]);
+      }
+    } catch (error) {
+      console.error('Error in chat submission:', error);
     } finally {
       setIsTyping(false);
     }
@@ -234,10 +285,10 @@ const ChatHome = () => {
 
   const handleRegenerateResponse = async () => {
     if (!activeChatId || !messages.length || !currentUser) return;
-    
+
     // Remove the last AI message
     const newMessages = [...messages];
-    
+
     let lastUserMessage = '';
     for (let i = newMessages.length - 1; i >= 0; i--) {
       if (newMessages[i].role === 'assistant') {
@@ -247,20 +298,20 @@ const ChatHome = () => {
         break;
       }
     }
-    
+
     if (!lastUserMessage) return;
-    
+
     // Update chat without the last AI message
     updateChatMessages(activeChatId, newMessages);
     setIsTyping(true);
-    
+
     try {
       // Call the backend API to regenerate the response
       const data = await callSearchAPI(lastUserMessage, activeChatId);
-      
+
       // Determine if this is a travel response or general response
       const isTravelResponse = 'cities' in data && Array.isArray(data.cities) && data.cities.length > 0;
-      
+
       // Create AI response message with travel flag and destinations if applicable
       const aiMessage: Message = {
         id: uuidv4(),
@@ -270,10 +321,10 @@ const ChatHome = () => {
         isTravel: isTravelResponse,
         destinations: isTravelResponse ? data.cities : undefined
       };
-      
+
       // Update chat with AI response
       updateChatMessages(activeChatId, [...newMessages, aiMessage]);
-      
+
       // Also update the chat context destinations for backward compatibility if it's a travel response
       if (isTravelResponse && Array.isArray(data.cities)) {
         try {
@@ -281,16 +332,16 @@ const ChatHome = () => {
             ...dest,
             image: dest.imageUrl || ''
           }));
-          
+
           updateChatDestinations(activeChatId, destinations);
         } catch (destError) {
           console.error('Error processing destinations:', destError);
         }
       }
-      
+
     } catch (error) {
       console.error('Error regenerating response:', error);
-      
+
       // Fallback response in case of API error
       const errorMessage: Message = {
         id: uuidv4(),
@@ -299,7 +350,7 @@ const ChatHome = () => {
         timestamp: new Date(),
         isTravel: false
       };
-      
+
       // Update chat with error message
       updateChatMessages(activeChatId, [...newMessages, errorMessage]);
     } finally {
@@ -324,20 +375,48 @@ const ChatHome = () => {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleScroll = () => {
-    if (!messagesContainerRef.current) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    // Show scroll down button when not at bottom
-    setShowScrollDown(scrollHeight - scrollTop - clientHeight > 100);
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
   };
 
   // Format time for chat messages
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleOpenDetailsModal = (destination: DestinationDetail) => {
+    setSelectedDestination(destination);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setIsModalOpen(false);
+    setSelectedDestination(null);
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent, destination: DestinationDetail) => {
+    e.stopPropagation(); // Prevent the click from triggering parent elements
+    toggleFavorite(destination);
+  };
+
+  const handleStartPlanning = (destination: DestinationDetail) => {
+    // Ensure safetyRating is a number for compatibility with TripPlanningModal
+    const formattedDestination = {
+      ...destination,
+      // Convert safetyRating to number if it's a string
+      safetyRating: typeof destination.safetyRating === 'string' 
+        ? parseInt(destination.safetyRating, 10) || 4 
+        : destination.safetyRating
+    };
+    setSelectedDestination(formattedDestination);
+    setIsPlanningModalOpen(true);
+  };
+
+  const handleClosePlanningModal = () => {
+    setIsPlanningModalOpen(false);
+    setSelectedDestination(null);
   };
 
   // Render a loading state if chatSessions are being loaded
@@ -350,152 +429,426 @@ const ChatHome = () => {
     );
   }
 
-  return (
-    <div className="relative flex flex-col h-full overflow-hidden text-gray-200">
-      {/* Main chat area */}
-      <div 
-        ref={messagesContainerRef} 
-        className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin 
-                  scrollbar-thumb-gray-700 scrollbar-track-transparent"
-        onScroll={handleScroll}
-      >
-        <div className="max-w-4xl mx-auto">
-          {/* Welcome message when no messages */}
-          {messages.length === 0 && (
-            <div className="text-center py-10">
-              <h2 className="text-2xl font-semibold text-gray-200 mb-2">Welcome to Wanderlust Whisper</h2>
-              <p className="text-gray-400">Start a conversation about travel destinations, visa requirements, or get travel tips</p>
-            </div>
-          )}
-          
-          {/* Render messages and typing indicator */}
-          <div className="flex flex-col space-y-8">
-            {messages.map((message) => (
-              <div key={message.id}>
-                {message.role === 'user' ? (
-                  /* User message - styled as darker bubble on right side */
-                  <div className="flex justify-end mb-4">
-                    <div className="flex items-start max-w-[80%]">
-                      <div className="bg-gray-700/60 rounded-2xl py-3 px-4">
-                        <p className="text-gray-100 whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* AI message with ResponseHandler */
-                  <div className="mb-4 px-1">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center mr-3">
-                        <Bot className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center mb-1">
-                          <div className="text-xs text-gray-400">
-                            {formatTime(message.timestamp)}
-                          </div>
-                        </div>
-                        
-                        {/* Use ResponseHandler component to render AI responses */}
-                        <ResponseHandler 
-                          content={message.content}
-                          isTravel={message.isTravel || false}
-                          destinations={message.destinations || []}
-                          onRateMessage={(rating) => handleRateMessage(message.id, rating)}
-                          onCopyMessage={() => handleCopyMessage(message.content)}
-                        />
-                        
-                        {/* Quick reply buttons for location clarification */}
-                        {isClarificationRequest(message.content) && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <div className="w-full text-xs text-gray-400 mb-1 flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" /> 
-                              Quick replies:
-                            </div>
-                            {POPULAR_COUNTRIES.map(country => (
-                              <Button
-                                key={country}
-                                variant="outline"
-                                size="sm"
-                                className="bg-transparent border-gray-700 hover:bg-gray-800 text-gray-300 text-xs rounded-full px-3 py-1 h-auto"
-                                onClick={() => handleQuickReply(country)}
-                              >
-                                {country}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+  // Show guest welcome screen only for first-time guest users with no messages
+  if (!messages.length && isGuestUser && !activeChatId) {
+    return <GuestWelcome />;
+  }
+
+  // Show empty state for logged-in users with no messages
+  if (!messages.length && currentUser && !isGuestUser && !activeChatId) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-white pt-[72px]">
+        <img
+          src="/Preview.png"
+          alt="Nomadic Trails Welcome"
+          className="w-16 h-16 mb-6"
+        />
+        <h1 className="text-2xl font-bold mb-2 text-gray-800">
+          Welcome back {userName}
+        </h1>
+        <p className="text-gray-600 mb-8 max-w-md text-center">
+          Discover destinations made just for you.
+        </p>
+
+
+        {/* Chat Input */}
+        <div className="sticky bottom-0 bg-white px-4 py-4 border-t border-gray-100 shadow-lg">
+          <form onSubmit={handleSubmit} className="relative max-w-[1200px] mx-auto">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={cn(
+                  "p-2 text-gray-500 hover:text-gray-700 transition-colors",
+                  !currentUser && "opacity-50 cursor-not-allowed"
                 )}
+                onClick={() => console.log('Add attachments')}
+                disabled={!currentUser}
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+
+              <div className="flex-1 flex items-center h-[56px] bg-white border border-[#CFCFCF] rounded-[12px] overflow-hidden focus-within:border-[#C66E4F] transition-colors">
+                <Input
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  placeholder="Discover destinations made just for you"
+                  className={cn(
+                    "flex-1 h-full bg-transparent border-0 focus:ring-0 focus:outline-none px-4",
+                    "placeholder:text-[#B3B3B3]",
+                    isTyping && "opacity-75"
+                  )}
+                  disabled={!currentUser || isTyping}
+                />
               </div>
-            ))}
-        
-            {/* AI is typing indicator */}
-            {isTyping && (
-              <div className="flex items-center text-gray-400 mt-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center mr-3">
-                  <Bot className="w-5 h-5 text-white" />
+
+              <button
+                type="submit"
+                className={cn(
+                  "w-[60px] h-[56px] flex items-center justify-center rounded-xl bg-[#C66E4F] hover:bg-[#B85E34] transition-colors relative",
+                  (!currentUser || !inputValue.trim() || isTyping) && "opacity-50 cursor-not-allowed"
+                )}
+                disabled={!currentUser || !inputValue.trim() || isTyping}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {isTyping ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                  ) : (
+                    <img
+                      src="/Vector.png"
+                      alt="Send message"
+                      className="w-5 h-5"
+                      style={{
+                        filter: 'brightness(0) invert(1)' // Makes the image white
+                      }}
+                    />
+                  )}
                 </div>
-                <div className="flex space-x-1">
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt for non-authenticated users
+  if (!currentUser) {
+    return <GuestWelcome />;
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen pt-[72px]">
+      {/* Messages area - removed overflow-y-auto */}
+      <div
+        className="flex-1 px-6 py-4 space-y-6"
+      >
+        {/* Welcome message - shown when no messages exist */}
+        {!messages.length && (
+          <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+            <img
+              src="/Preview.png"
+              alt="Nomadic Trails"
+              className="w-16 h-16 mb-6"
+            />
+            <h1 className="text-2xl font-bold mb-2 text-gray-800">
+              Welcome back {isGuestUser ? 'Guest' : userName}
+            </h1>
+            <p className="text-gray-600">
+              Discover destinations made just for you.
+            </p>
+          </div>
+        )}
+
+        {/* Chat messages */}
+        {messages.map((message, i) => (
+          <div
+            key={message.id}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} relative animate-fade-in`}
+          >
+            {message.role === 'assistant' && (
+              <div className="flex-shrink-0 mr-4">
+                <img
+                  src="/AI Avatar.png"
+                  alt="AI"
+                  className="w-10 h-10 rounded-full"
+                />
+              </div>
+            )}
+            <div
+              className={cn(
+                "rounded-2xl p-4",
+                message.role === 'user'
+                  ? "max-w-3xl text-[#1B1B3D] bg-[#d1aea1]"  // keep user messages at current max width with new background color
+                  : "max-w-5xl bg-transparent text-gray-800 rounded-tl-none"  // increased from max-w-3xl to max-w-5xl
+              )}
+              style={
+                message.role === 'user'
+                  ? {
+                    width: '299px',
+                    height: '60px',
+                    borderRadius: '14px 0px 14px 14px',
+                    border: '1px solid #E2E8F0',
+                    background: '#FFFFFF',
+                  }
+                  : {}
+              }
+            >
+              <div className="prose prose-sm max-w-none">
+                {message.content}
+              </div>
+
+
+              {/* For AI messages with destinations, render destination cards */}
+              {message.isTravel && message.destinations && message.destinations.length > 0 && (
+                <div className="px-4">
+                  <div className="mt-6">
+                    <div className="mb-4">
+                      <h2 className="text-xl font-semibold text-gray-900">Suggested Destinations for You</h2>
+                      <p className="text-sm text-gray-600">
+                        Personalized recommendations based on your preferences and search history.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {message.destinations.map((destination) => (
+                        <div
+                          key={destination.id}
+                          className="rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+                          style={{ width: "308px", height: "462px", borderRadius: "10px", border: "1px solid #D7D7D7", background: "#FFF" }}
+                        >
+                          <div className="flex justify-center px-2 mt-2">
+                            <div className="relative w-[288px] h-[175px] flex-shrink-0 rounded-[8px] overflow-hidden bg-[#BDBDBD]">
+                              {destination.imageUrl && (
+                                <img
+                                  src={destination.imageUrl}
+                                  alt={destination.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+
+                              {/* Favorite button */}
+                              <button
+                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors duration-200"
+                                onClick={(e) => handleToggleFavorite(e, destination)}
+                              >
+                                <Heart
+                                  className={`h-4 w-4 ${isFavorite(destination.id) ? 'text-[#C66E4F]' : 'text-gray-500'} transition-colors duration-200`}
+                                  fill={isFavorite(destination.id) ? '#C66E4F' : 'none'}
+                                />
+                              </button>
+
+                              {/* Country pill */}
+                              <div className="absolute bottom-2 left-2 flex items-start px-[10px] py-[4px] rounded-full bg-white">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-black" />
+                                  <span className="text-xs text-black">{destination.country}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+
+
+                          <div className="p-4">
+                            <h3 className="font-bold text-gray-900 text-xl mb-4">{destination?.name || 'Destination'}</h3>
+
+                            {/* Stats grid */}
+                            <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
+                              {/* Cost */}
+                              <div>
+                                <div className="flex items-center text-gray-500 mb-1">
+                                  <DollarSign className={`w-3 h-3 mr-1 ${getCostColor(destination?.costOfLiving)}`} />
+                                  <span>Cost</span>
+                                </div>
+                                <div className="font-semibold text-gray-900 capitalize">{destination?.costOfLiving || 'Low'}</div>
+                              </div>
+
+                              {/* Wi-Fi */}
+                              <div>
+                                <div className="flex items-center text-gray-500 mb-1">
+                                  <Wifi className={`w-3 h-3 mr-1 ${getInternetColor(destination?.internetSpeed)}`} />
+                                  <span>Wi-Fi</span>
+                                </div>
+                                <div className="font-semibold text-gray-900">
+                                  {destination?.internetSpeed?.includes('Mbps')
+                                    ? destination.internetSpeed
+                                    : destination?.internetSpeed?.toLowerCase().includes('fast')
+                                      ? '30-40 Mbps'
+                                      : destination?.internetSpeed?.toLowerCase().includes('moderate')
+                                        ? '< 10 Mbps'
+                                        : '30-40 Mbps'}
+                                </div>
+                              </div>
+
+                              {/* Visa */}
+                              <div>
+                                <div className="flex items-center text-gray-500 mb-1">
+                                  <Globe className="w-3 h-3 mr-1 text-blue-500" />
+                                  <span>Visa</span>
+                                </div>
+                                <div className="font-semibold text-gray-900">{destination?.visaRequirements || 'Easy'}</div>
+                              </div>
+
+                              {/* Safety */}
+                              <div>
+                                <div className="flex items-center text-gray-500 mb-1">
+                                  <Shield className="w-3 h-3 mr-1 text-green-500" />
+                                  <span>Safety</span>
+                                </div>
+                                <div className="font-semibold text-gray-900">{destination?.safetyRating?.toString() || '4'}</div>
+                              </div>
+                            </div>
+
+                            {/* Note without background and moved slightly up */}
+                            <div className="mb-4 relative -mt-2">
+                              <p className="text-[12px] leading-[1.44] font-normal text-[rgba(198,110,78,0.70)] font-inter italic">
+                                {destination?.description || destination?.insiderTip || "Note: Visit Bambolim Beach early morning for a peaceful sunrise experience."}
+                              </p>
+                            </div>
+
+
+                            {/* Action buttons with fixed width and flex content */}
+                            <div className="flex gap-3">
+                              <button
+                                className="w-[130px] flex justify-center items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-md font-medium text-sm hover:bg-gray-50 transition-colors"
+                                onClick={() => handleOpenDetailsModal && handleOpenDetailsModal(destination)}
+                              >
+                                More details
+                              </button>
+                              <button
+                                className="w-[130px] flex justify-center items-center gap-2 px-4 py-2 bg-[#C66E4E] text-white rounded-md font-medium text-sm hover:bg-[#A75A3D] transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartPlanning(destination);
+                                }}
+                              >
+                                Start Planning
+                              </button>
+                            </div>
+                          </div>
+
+
+                          {/* Bottom corner indicator */}
+
+                        </div>
+
+                      ))}
+                    </div>
+                  </div>
                 </div>
+
+              )}
+
+              {/* Quick country replies for clarification requests */}
+              {message.role === 'assistant' && isClarificationRequest(message.content) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {POPULAR_COUNTRIES.map(country => (
+                    <button
+                      key={country}
+                      onClick={() => handleQuickReply(country)}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-medium rounded-full px-3 py-1 transition-colors"
+                    >
+                      {country}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {message.role === 'user' && (
+              <div className="flex-shrink-0 ml-4">
+                <img
+                  src="/image.png"
+                  alt="User"
+                  className="w-12 h-12 rounded-full border border-gray-300"
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '48px',
+                    border: '1px solid #E2E8F0',
+                    flexShrink: 0,
+                  }}
+                />
+              </div>
+            )}
+            {message.role === 'user' && i < messages.length - 1 && (
+              <div className="text-xs text-gray-500 absolute -bottom-5 right-14">
+                {formatTime(message.timestamp)}
+              </div>
+            )}
+            {message.role === 'assistant' && i < messages.length - 1 && (
+              <div className="text-xs text-gray-500 absolute -bottom-5 left-14">
+                {formatTime(message.timestamp)}
               </div>
             )}
           </div>
-        
-          {/* Invisible element to scroll to */}
-          <div ref={messagesEndRef} />
-        </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
-      
+
       {/* Scroll down button */}
       {showScrollDown && (
-        <Button 
-          className="absolute bottom-24 right-8 rounded-full bg-gray-800 hover:bg-gray-700"
+        <button
+          className="fixed bottom-28 right-6 bg-white shadow-md rounded-full p-2 text-primary hover:bg-gray-100 transition-all z-20"
           onClick={scrollToBottom}
         >
-          <ChevronDown className="h-5 w-5" />
-        </Button>
+          <ChevronDown className="h-6 w-6" />
+        </button>
       )}
-      
-      {/* Chat input */}
-      <div className="border-t border-gray-800 p-4">
-        <form onSubmit={handleSubmit} className="flex space-x-2">
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="icon" 
-            className="text-gray-400 hover:text-white"
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-          <div className="relative flex-1">
-            <Input
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder="Message Wanderlust Whisper..."
-              className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 rounded-xl pr-10 focus-visible:ring-purple-500"
-              disabled={isTyping || !currentUser}
-            />
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+
+      {/* Destination Details Modal */}
+      <DestinationDetailsModal
+        destination={selectedDestination}
+        open={isModalOpen}
+        onClose={handleCloseDetailsModal}
+      />
+
+      {/* Favorites Dashboard */}
+      <FavoritesDashboard
+        isOpen={favoritesDashboardOpen}
+        onClose={() => setFavoritesDashboardOpen(false)}
+      />
+
+      {/* Trip Planning Modal */}
+      <TripPlanningModal
+        destination={selectedDestination}
+        open={isPlanningModalOpen}
+        onClose={handleClosePlanningModal}
+      />
+
+      {/* Input area */}
+      <div className="sticky bottom-0 bg-white px-4 py-4 border-t border-gray-100 shadow-lg">
+        <form onSubmit={handleSubmit} className="relative max-w-[1200px] mx-auto">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={cn(
+                "p-2 text-gray-500 hover:text-gray-700 transition-colors",
+                !currentUser && "opacity-50 cursor-not-allowed"
+              )}
+              onClick={() => console.log('Add attachments')}
+              disabled={!currentUser}
             >
-              <Mic className="h-5 w-5" />
-            </Button>
+              <Plus className="h-5 w-5" />
+            </button>
+
+            <div className="flex-1 flex items-center h-[56px] bg-white border border-[#CFCFCF] rounded-[12px] overflow-hidden focus-within:border-[#C66E4F] transition-colors">
+              <Input
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Discover destinations made just for you"
+                className={cn(
+                  "flex-1 h-full bg-transparent border-0 focus:ring-0 focus:outline-none px-4",
+                  "placeholder:text-[#B3B3B3]",
+                  isTyping && "opacity-75"
+                )}
+                disabled={!currentUser || isTyping}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={cn(
+                "w-[60px] h-[56px] flex items-center justify-center rounded-xl bg-[#C66E4F] hover:bg-[#B85E34] transition-colors relative",
+                (!currentUser || !inputValue.trim() || isTyping) && "opacity-50 cursor-not-allowed"
+              )}
+              disabled={!currentUser || !inputValue.trim() || isTyping}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                {isTyping ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-white" />
+                ) : (
+                  <img
+                    src="/Vector.png"
+                    alt="Send message"
+                    className="w-5 h-5"
+                    style={{
+                      filter: 'brightness(0) invert(1)' // Makes the image white
+                    }}
+                  />
+                )}
+              </div>
+            </button>
           </div>
-          <Button 
-            type="submit" 
-            className="rounded-xl text-white bg-gradient-to-r from-nomad-blue to-nomad-teal hover:opacity-90"
-            disabled={!inputValue.trim() || isTyping || !currentUser}
-          >
-            Send
-          </Button>
         </form>
       </div>
     </div>

@@ -8,7 +8,8 @@ import {
   signOut, 
   User,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signInAnonymously
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -58,6 +59,7 @@ export {
   onAuthStateChanged, 
   signOut,
   signInWithPopup,
+  signInAnonymously,
   collection,
   doc,
   setDoc,

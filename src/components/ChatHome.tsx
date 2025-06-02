@@ -105,6 +105,105 @@ interface MessageWithDestinations extends Message {
   isTravel?: boolean;
 }
 
+// Add this function after the other utility functions but before the ChatHome component
+const formatAIResponse = (content: string): React.ReactNode => {
+  // Don't format if content is very short
+  if (content.length < 50) return content;
+  
+  // Split the content into paragraphs
+  const paragraphs = content.split('\n\n').filter(p => p.trim());
+  
+  // If there's only one short paragraph, return it as is
+  if (paragraphs.length === 1 && paragraphs[0].length < 100) {
+    return paragraphs[0];
+  }
+  
+  // Process each paragraph
+  return (
+    <div className="ai-formatted-response">
+      {paragraphs.map((paragraph, index) => {
+        // Check if this is a heading (ends with ":" or has markdown heading format)
+        if (paragraph.trim().endsWith(':') || paragraph.includes('**') || /^#+\s/.test(paragraph)) {
+          // Clean up the heading text
+          let headingText = paragraph.trim();
+          headingText = headingText.replace(/^\#+\s/, ''); // Remove markdown heading syntax
+          headingText = headingText.replace(/\*\*/g, ''); // Remove bold markdown
+          
+          return (
+            <h3 key={index} className="text-[#171616] font-semibold mt-3 mb-2">
+              {headingText}
+            </h3>
+          );
+        }
+        
+        // Check if paragraph contains a list (numbered or bullet points)
+        if (paragraph.includes('- ') || /^\d+\./.test(paragraph)) {
+          // Split into list items
+          const items = paragraph.split('\n').filter(item => item.trim());
+          
+          return (
+            <ul key={index} className="list-disc pl-5 space-y-1 my-2">
+              {items.map((item, itemIndex) => {
+                // Clean up the item text
+                let itemText = item.trim().replace(/^-\s/, '').replace(/^\d+\.\s/, '');
+                
+                return (
+                  <li key={itemIndex} className="text-gray-800">
+                    {itemText}
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+        
+        // For comparison sections (like the one in the example)
+        if (paragraph.includes('###')) {
+          const sections = paragraph.split('###').filter(s => s.trim());
+          
+          return (
+            <div key={index} className="my-3">
+              {sections.map((section, sectionIndex) => {
+                // Extract section number and title if present
+                const match = section.match(/^\s*(\d+)\.\s*\*\*(.*?)\*\*/);
+                
+                if (match) {
+                  const [, number, title] = match;
+                  const content = section.replace(/^\s*\d+\.\s*\*\*(.*?)\*\*/, '').trim();
+                  
+                  return (
+                    <div key={sectionIndex} className="mb-2">
+                      <h4 className="font-medium text-[#C66E4F]">
+                        {number}. {title}
+                      </h4>
+                      <p className="text-gray-800">{content}</p>
+                    </div>
+                  );
+                }
+                
+                return <p key={sectionIndex} className="text-gray-800 my-2">{section.trim()}</p>;
+              })}
+            </div>
+          );
+        }
+        
+        // Regular paragraphs get converted to bullet points if they're not too long
+        if (paragraph.length < 200 && !paragraph.startsWith('Here')) {
+          return (
+            <div key={index} className="flex my-2">
+              <span className="text-[#C66E4F] mr-2">•</span>
+              <p className="text-gray-800">{paragraph}</p>
+            </div>
+          );
+        }
+        
+        // Long paragraphs remain as paragraphs
+        return <p key={index} className="text-gray-800 my-2">{paragraph}</p>;
+      })}
+    </div>
+  );
+};
+
 const ChatHome = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -574,7 +673,9 @@ const ChatHome = () => {
               }
             >
               <div className="prose prose-sm max-w-none">
-                {message.content}
+                {message.role === 'assistant' 
+                  ? formatAIResponse(message.content)
+                  : message.content}
               </div>
 
 

@@ -41,7 +41,7 @@ const getInternetColor = (internet: string) => {
 };
 
 // Define the backend API URL
-const API_URL = 'https://nomadtravel2-dgbqcufshkbkahdj.uksouth-01.azurewebsites.net/';
+const API_URL = 'https://travel-deploy-b2dyfvfpbkhcfwb2.uksouth-01.azurewebsites.net/';
 
 // Helper function for API calls
 const callSearchAPI = async (query: string, sessionId: string | null) => {

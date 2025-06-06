@@ -507,7 +507,7 @@ const ChatHome = () => {
       // Convert safetyRating to number if it's a string
       safetyRating: typeof destination.safetyRating === 'string' 
         ? parseInt(destination.safetyRating, 10) || 4 
-        : destination.safetyRating
+        : destination.safetyRating || 4
     };
     setSelectedDestination(formattedDestination);
     setIsPlanningModalOpen(true);
@@ -516,6 +516,24 @@ const ChatHome = () => {
   const handleClosePlanningModal = () => {
     setIsPlanningModalOpen(false);
     setSelectedDestination(null);
+  };
+
+  // Get all destinations from the current chat messages
+  const getAllDestinationsFromChat = (): DestinationDetail[] => {
+    const allDestinations: DestinationDetail[] = [];
+    
+    messages.forEach(message => {
+      if (message.isTravel && message.destinations) {
+        message.destinations.forEach(dest => {
+          // Avoid duplicates by checking if destination with same ID already exists
+          if (!allDestinations.find(existing => existing.id === dest.id)) {
+            allDestinations.push(dest);
+          }
+        });
+      }
+    });
+    
+    return allDestinations;
   };
 
   // Render a loading state if chatSessions are being loaded
@@ -694,8 +712,14 @@ const ChatHome = () => {
                       {message.destinations.map((destination) => (
                         <div
                           key={destination.id}
-                          className="rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300"
-                          style={{ width: "308px", height: "462px", borderRadius: "10px", border: "1px solid #D7D7D7", background: "#FFF" }}
+                          className="rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                          style={{ 
+                            width: "308px", 
+                            minHeight: "462px", 
+                            borderRadius: "10px", 
+                            border: "1px solid #D7D7D7", 
+                            background: "#FFF" 
+                          }}
                         >
                           <div className="flex justify-center px-2 mt-2">
                             <div className="relative w-[288px] h-[175px] flex-shrink-0 rounded-[8px] overflow-hidden bg-[#BDBDBD]">
@@ -730,7 +754,7 @@ const ChatHome = () => {
 
 
 
-                          <div className="p-4">
+                          <div className="p-4 flex-1 flex flex-col">
                             <h3 className="font-bold text-gray-900 text-xl mb-4">{destination?.name || 'Destination'}</h3>
 
                             {/* Stats grid */}
@@ -780,16 +804,15 @@ const ChatHome = () => {
                               </div>
                             </div>
 
-                            {/* Note without background and moved slightly up */}
-                            <div className="mb-4 relative -mt-2">
+                            {/* Note - flexible content area that can expand */}
+                            <div className="mb-4 flex-1 flex items-start">
                               <p className="text-[12px] leading-[1.44] font-normal text-[rgba(198,110,78,0.70)] font-inter italic">
                                 {destination?.description || destination?.insiderTip || "Note: Visit Bambolim Beach early morning for a peaceful sunrise experience."}
                               </p>
                             </div>
 
-
-                            {/* Action buttons with fixed width and flex content */}
-                            <div className="flex gap-3">
+                            {/* Action buttons - always positioned at bottom */}
+                            <div className="flex gap-3 mt-auto">
                               <button
                                 className="w-[130px] flex justify-center items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-md font-medium text-sm hover:bg-gray-50 transition-colors"
                                 onClick={() => handleOpenDetailsModal && handleOpenDetailsModal(destination)}
@@ -894,6 +917,7 @@ const ChatHome = () => {
         destination={selectedDestination}
         open={isPlanningModalOpen}
         onClose={handleClosePlanningModal}
+        availableDestinations={getAllDestinationsFromChat()}
       />
 
       {/* Input area */}

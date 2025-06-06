@@ -886,6 +886,50 @@ const ChatHome = () => {
             )}
           </div>
         ))}
+
+        {/* Loading Animation - appears when AI is typing */}
+        {isTyping && (
+          <div className="flex justify-center items-center py-12 animate-fade-in">
+            <div className="flex flex-col items-center space-y-4">
+              {/* Pulsing dots animation */}
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-[#C66E4F] rounded-full animate-pulse"></div>
+                <div 
+                  className="w-3 h-3 bg-[#C66E4F] rounded-full animate-pulse" 
+                  style={{ animationDelay: '0.2s' }}
+                ></div>
+                <div 
+                  className="w-3 h-3 bg-[#C66E4F] rounded-full animate-pulse" 
+                  style={{ animationDelay: '0.4s' }}
+                ></div>
+              </div>
+              
+              {/* Loading text with typewriter effect */}
+              <div className="text-center">
+                <p className="text-[#C66E4F] font-medium text-lg mb-1">
+                  Alex is thinking...
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Finding the perfect destinations for you ✨
+                </p>
+              </div>
+              
+              {/* Animated travel icons */}
+              <div className="flex space-x-6 mt-4">
+                <div className="text-2xl animate-bounce" style={{ animationDelay: '0s' }}>
+                  ✈️
+                </div>
+                <div className="text-2xl animate-bounce" style={{ animationDelay: '0.3s' }}>
+                  🌍
+                </div>
+                <div className="text-2xl animate-bounce" style={{ animationDelay: '0.6s' }}>
+                  🏝️
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

@@ -907,7 +907,7 @@ const ChatHome = () => {
               {/* Loading text with typewriter effect */}
               <div className="text-center">
                 <p className="text-[#C66E4F] font-medium text-lg mb-1">
-                  Alex is thinking...
+                  Nomadic is thinking...
                 </p>
                 <p className="text-gray-500 text-sm">
                   Finding the perfect destinations for you ✨
